@@ -217,14 +217,6 @@ tomcat:
      label: Tomcat Port
      fieldName: port
    - Mandatory: true
-     min: ''
-     dataType: string
-     max: ''
-     defaultValue: '/usr/bin'
-     tooltip: Java path of host
-     label: Java path
-     fieldName: java_path
-   - Mandatory: true
      fieldName: documentsTypes
      tooltip: document Types to be collected
      label: Document Types
