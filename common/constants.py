@@ -1,3 +1,10 @@
+"""
+*******************
+*Copyright 2017, MapleLabs, All Rights Reserved.
+*
+********************
+"""
+
 COLLECTORS = "collectors"
 COLLECTOR_MGR = "collector_manager"
 COLLECTD_MGR = "collectd_manager"

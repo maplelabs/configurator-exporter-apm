@@ -1,3 +1,10 @@
+"""
+*******************
+*Copyright 2017, MapleLabs, All Rights Reserved.
+*
+********************
+"""
+
 #!/usr/bin/env python
 """ A python plugin for downloading log file
      from ESA cluster. """

@@ -1,3 +1,10 @@
+"""
+*******************
+*Copyright 2017, MapleLabs, All Rights Reserved.
+*
+********************
+"""
+
 import copy
 import socket
 from mako.template import Template

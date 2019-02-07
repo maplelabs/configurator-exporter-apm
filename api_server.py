@@ -1,8 +1,13 @@
+"""
+*******************
+*Copyright 2017, MapleLabs, All Rights Reserved.
+*
+********************
+"""
 #!/usr/bin/env python
 
 import ConfigParser
 import argparse
-
 import web
 
 from common.util import *

@@ -1,3 +1,10 @@
+"""
+*******************
+*Copyright 2017, MapleLabs, All Rights Reserved.
+*
+********************
+"""
+
 # from config_handler.collectd_manager import *
 from common.util import *
 # STATS_ROOTDIR = "/opt/collectd/var/lib/"

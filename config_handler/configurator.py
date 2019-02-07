@@ -1,3 +1,10 @@
+"""
+*******************
+*Copyright 2017, MapleLabs, All Rights Reserved.
+*
+********************
+"""
+
 from threading import Timer
 
 from config_handler import collectd_manager

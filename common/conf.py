@@ -1,3 +1,10 @@
+"""
+*******************
+*Copyright 2017, MapleLabs, All Rights Reserved.
+*
+********************
+"""
+
 COLLECTDBIN = '/opt/collectd/sbin/collectd'
 CollectdPluginDestDir = '/opt/collectd/plugins'
 CollectdPluginConfDir = '/opt/collectd/conf'
