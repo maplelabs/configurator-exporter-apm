@@ -209,14 +209,6 @@ tomcat:
    interval: 300
    config:
    - Mandatory: true
-     min: ''
-     dataType: string
-     max: ''
-     defaultValue: '8080'
-     tooltip: Tomcat Port
-     label: Tomcat Port
-     fieldName: port
-   - Mandatory: true
      fieldName: documentsTypes
      tooltip: document Types to be collected
      label: Document Types
