@@ -4,13 +4,9 @@
 *
 ********************
 """
-'''
-discover services
-'''
 import os
 import subprocess
 import re
-import requests
 import psutil
 from config_handler import configurator
 from common.util import *
@@ -32,12 +28,11 @@ SERVICE_NAME = {
     "hxconnect": "hxconnect",
     "cassandra": "cassandra",
     "esalogstore": "ESAlogstore",
-    #"knox": "knox",
     "redis": "redis",
-    "OOZIE": "OOZIE",
-    "YARN": "YARN",
-    "HDFS": "HDFS",
-    "SPARK2": "SPARK2"
+    "oozie": "oozie",
+    "yarn": "yarn",
+    "hdfs": "hdfs",
+    "spark2": "spark2"
 }
 SERVICES = [
     "elasticsearch",
@@ -55,7 +50,6 @@ SERVICES = [
     "hxconnect",
     "cassandra",
     "esalogstore",
-    #"knox",
 ]
 '''
 Mapping for services and the plugin to be configured for them.
@@ -75,45 +69,45 @@ SERVICE_PLUGIN_MAPPING = {
     "zookeeper": "zookeeperjmx",
     "hxconnect": "hxconnect",
     "cassandra": "cassandra",
-    "OOZIE": "oozie",
-    "YARN": "yarn",
-    "HDFS": "namenode",
-    "SPARK2": "spark"
+    "oozie": "oozie",
+    "yarn": "yarn",
+    "hdfs": "namenode",
+    "spark2": "spark"
 }
 
 POLLER_PLUGIN = ["elasticsearch"]
-HADOOP_SERVICES = [
-    "OOZIE",
-    "YARN",
-    "HDFS",
-    "SPARK2"
-]
 HADOOP_SERVICE = {
     "yarn-rm-log": { \
          "service-name": "org.apache.hadoop.yarn.server.resourcemanager.ResourceManager",
-         "service-list": ["yarn-rm", "yarn-audit"]
+         "service-list": ["yarn-rm", "yarn-audit"],
+         "plugin_name": "yarn"
                    },
     "yarn-timeline-server": { \
          "service-name": "org.apache.hadoop.yarn.server.applicationhistoryservice.ApplicationHistoryServer",
-         "service-list": ["yarn-timeline"]
+         "service-list": ["yarn-timeline"],
+         "plugin_name": "yarn"
                             },
     "hdfs-namenode": { \
          "service-name": "org.apache.hadoop.hdfs.server.namenode.NameNode",
-         "service-list": ["hdfs-namenode", "hdfs-audit", "hdfs-gc", "hdfs-zkfc-manager"]
+         "service-list": ["hdfs-namenode", "hdfs-audit", "hdfs-gc", "hdfs-zkfc-manager"],
+         "plugin_name": "hdfs"
                      },
     "hdfs-journalnode": { \
          "service-name": "org.apache.hadoop.hdfs.qjournal.server.JournalNode",
-         "service-list": ["hdfs-journalnode", "hdfs-gc", "hdfs-journalnode-manager"]
+         "service-list": ["hdfs-journalnode", "hdfs-gc", "hdfs-journalnode-manager"],
+         "plugin_name": "hdfs"
                         },
     "oozie-server": { \
          "service-name": "org.apache.catalina.startup.Bootstrap",
          "service-list": ["oozie-ops", "oozie-audit", "oozie-error-logs", "oozie-logs", "oozie-instrumentation", "oozie-jpa"],
-         "service-cmd-line": "oozie-server"
+         "service-cmd-line": "oozie-server",
+         "plugin_name": "oozie"
                     },
     "hdfs-datanode": { \
-    "service-name": "org.apache.hadoop.hdfs.server.datanode.DataNode",
-    "service-list": ["hdfs-datanode"]
-     }
+         "service-name": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+         "service-list": ["hdfs-datanode"],
+         "plugin_name": "hdfs"
+                     }
 }
 
 def add_pid_usage(pid, pid_list):
@@ -165,7 +159,6 @@ def parser_jcmd(service):
             if java_avail:
                 return JCMD_PID_DICT
 
-            #print( exec_subprocess("sudo jcmd | awk '{print $1 \" \" $2}'"))
             res = exec_subprocess("sudo jcmd | awk '{print $1 \" \" $2}'")
             if not res:
                 return pid_list
@@ -180,7 +173,6 @@ def parser_jcmd(service):
         for service_name, pid in JCMD_PID_DICT.items():
             if re.search(service, service_name):
                 pid_list.append(pid)
-        #print("{} pid list {}".format(service, pid_list))
         return pid_list
     except:
         logger.error("JCMD parser error")
@@ -213,10 +205,6 @@ def get_process_id(service):
     pids = []
 
     if service in ["kafka.Kafka", "zookeeper"]:
-        """if servcie == "tomcat":
-          service = "apache"
-        """
-
         pid_list = parser_jcmd(service)
 
         for pid in pid_list:
@@ -334,8 +322,7 @@ def add_logger_config(service_dict, service):
     Add logger config
     '''
     service_dict["loggerConfig"] = []
-    fluentd_plugins = configurator.get_fluentd_plugins_mapping().keys()
-    for item in fluentd_plugins:
+    for item in configurator.get_fluentd_plugins_mapping().keys():
         if item.startswith(service.split(".")[0]):
             log_config = {}
             log_config["name"] = item
@@ -343,6 +330,18 @@ def add_logger_config(service_dict, service):
             log_config["config"]["filters"] = {}
             service_dict["loggerConfig"].append(log_config)
     return service_dict
+
+def get_logger_config_dict(service):
+    '''
+    get logger config list
+    '''
+    logger_config = dict()
+    if service not in configurator.get_fluentd_plugins_mapping().keys():
+        return None
+    logger_config["name"] = service
+    logger_config["config"] = {"filters": dict()}
+    logger.debug("get_logger_config_dict return with {0}".format(logger_config))
+    return logger_config
 
 def add_poller_config(service, service_dict):
     '''
@@ -367,13 +366,15 @@ def add_poller_config(service, service_dict):
     return service_dict
 
 
-def add_agent_config(service, service_dict):
+def add_agent_config(service, service_dict=None):
     '''
     Find the input config for the plugin fieldname:defaultvalue
     :param service: name of the service
     :param dict: poller_dict as the input
     :return:
     '''
+    if not service_dict:
+        service_dict = dict()
     service_dict["agentConfig"] = {}
     agent_config = {}
     agent_config["config"] = {}
@@ -381,8 +382,6 @@ def add_agent_config(service, service_dict):
         if key == service:
             agent_config["name"] = value
             break
-    #print service
-    #print SERVICE_PLUGIN_MAPPING.keys()
     config = configurator.get_metrics_plugins_params(agent_config["name"])
     for item in config["plugins"]:
         if item.get("config") and item.get("name") == agent_config["name"]:
@@ -402,12 +401,13 @@ def add_agent_config(service, service_dict):
     # if there are multiple listening ports for the PID assosciate the first
     # port with the PID
     if service == "apache":
-        if len(service_dict["ports"]) != 0:
+        if service_dict["ports"]:
             agent_config["config"]["port"] = service_dict["ports"][0]
             if agent_config["config"]["port"] == "443":
                 agent_config["config"]["secure"] = "true"
 
     service_dict["agentConfig"].update(agent_config)
+    logger.debug("Returning add_agent_config with {0}".format(service_dict))
     return service_dict
 
 def check_nginx_plus():
@@ -477,42 +477,37 @@ def discover_services():
         var['agentConfig'] = {'name':'nginxplus'}
         discovery['nginxplus'] = [var]
 
-    # Hadoop plugin Start
-    if parser_jcmd("org.apache.ambari.server.controller.AmbariServer"):
-        for service in ["OOZIE", "HDFS", "YARN", "SPARK2"]:
-            logger.info("Hadoop service is %s" %service)
-            discovery[service] = []
-            port_dict = {}
-            port_dict["agentConfig"] = {}
-            logger_dict = add_logger_config(port_dict, service)
-            final_dict = add_agent_config(service, logger_dict)
-            discovery[service].append(final_dict)
-
-
     # Hadoop Log Start
-    try:
+    hadoop_logger = dict()
+    hadoop_agent = dict()
+    for service_name in get_hadoop_running_service_list():
+        logger.info("Hadoop services are %s" %service_name)
+        plugin_name = HADOOP_SERVICE[service_name]['plugin_name']
+        for service in HADOOP_SERVICE[service_name]['service-list']:
+            logger.info("service detail: {}".format(service))
+            logger_dict = get_logger_config_dict(service)
+            if not logger_dict:
+                continue
+            if plugin_name not in hadoop_logger:
+                hadoop_logger[plugin_name] = list()
+            hadoop_logger[plugin_name].append(logger_dict)
+    logger.info("hadoop loggers {0}".format(hadoop_logger))
+
+        # Hadoop plugin Start
+    if parser_jcmd("org.apache.ambari.server.controller.AmbariServer"):
+        for service in ["oozie", "hdfs", "yarn", "spark2"]:
+            logger.info("Hadoop service is %s" %service)
+            logger.debug("add_agent_config : {0}".format(add_agent_config(service)))
+            hadoop_agent[service] = add_agent_config(service)['agentConfig']
+    logger.info("hadoop agent {0}".format(hadoop_logger))
+
+    for service in ["oozie", "hdfs", "yarn", "spark2"]:
+        if not ((service in hadoop_agent) or (service in hadoop_logger)):
+            continue
         hadoop_dict = dict()
-        hadoop_dict["loggerConfig"] = list()
-        hadoop_dict["agentConfig"] = dict()
         hadoop_dict['pollerConfig'] = dict()
-
-        for service_name in get_hadoop_running_service_list():
-            logger.info("Hadoop services are %s" %service_name)
-            for service in HADOOP_SERVICE[service_name]['service-list']:
-                logger.info("service detail: {}".format(service))
-                port_dict = dict()
-                port_dict["loggerConfig"] = list()
-                port_dict["agentConfig"] = dict()
-                #print(service)
-                final_dict = add_logger_config(port_dict, service)
-                if not final_dict["loggerConfig"]:
-                    continue
-                hadoop_dict["loggerConfig"].append(final_dict["loggerConfig"][0])
-
-        if hadoop_dict["loggerConfig"]:
-            discovery["hadoop-logs"] = list()
-            discovery["hadoop-logs"].append(hadoop_dict)
-            #print(discovery["hadoop-logs"])
-    except Exception as e: print(e)
+        hadoop_dict["loggerConfig"] = hadoop_logger[service] if service in hadoop_logger else list()
+        hadoop_dict["agentConfig"] = hadoop_agent[service] if service in hadoop_agent else dict()
+        discovery[service] = [hadoop_dict]
     logger.info("Discovered service %s", discovery)
     return discovery
