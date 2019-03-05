@@ -301,12 +301,12 @@ def get_elasticsearch_status(host, index, port):
         try:
             settings_details = resp[current_index]['settings']['index'].get('blocks')
         except Exception as e:
-            logging.error("Elasticsearch error of host %s in index %s due to %s" % (host, current_index, str(e)))
+            logger.error("Elasticsearch error of host %s in index %s due to %s" % (host, current_index, str(e)))
             return "STOPPED"
         
         if settings_details:
-            read_only_allow_delete = settings_details.get('read_only_allow_delete', False)
-            if not read_only_allow_delete:
+            read_only_allow_delete = settings_details.get('read_only_allow_delete', 'false')
+            if read_only_allow_delete == 'false':
                 return "RUNNING"
             else:
                 logger.error("Elasticsearch error. Read_only_allow_delete flag set to %s" % read_only_allow_delete)
