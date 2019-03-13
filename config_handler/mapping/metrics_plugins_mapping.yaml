@@ -620,6 +620,19 @@ spark:
      label: Password
      fieldName: password
 
+#mapping for jmeter plugin
+jmeter:
+ - name: jmeter
+   interval: 300
+   config:
+   - Mandatory: true
+     min: ''
+     dataType: string
+     max: ''
+     defaultValue: '/home/centos/log.jtl'
+     tooltip: Path for listener file
+     label: Listener path
+     fieldName: listener_path
 
 #mapping for esa plugin
 #esalogstore:
