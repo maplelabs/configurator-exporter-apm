@@ -257,19 +257,29 @@ def get_target_status():
     target_details = {}
     try:
         exsting_data = file_reader(CollectdData)
-        exsting_data = json.loads(exsting_data)
-        if not exsting_data:
-            logger.info("No workload data found in collectd_data.json. Collecting workload details from fluentd_data.json")
-            exsting_data = file_reader(FluentdData)
-            exsting_data = json.loads(exsting_data)
-        if exsting_data:
-            for target in exsting_data['targets']:
+        collectd_exsting_data = json.loads(exsting_data)
+        if collectd_exsting_data:
+            for target in collectd_exsting_data['targets']:
                 target_details["name"] = target["name"]
                 target_details["index"] = target["index"]
                 target_details["status"] = get_elasticsearch_status(target["host"], target["index"], target["port"])
+                target_details["type"] = "collectd"
+                target_status.append(target_details)
+        else:
+            logger.error("No workload data found in collectd_data.json")
+
+        exsting_data = file_reader(FluentdData)
+        fluent_exsting_data = json.loads(exsting_data)
+        if fluent_exsting_data:
+            for target in fluent_exsting_data['targets']:
+                target_details["name"] = target["name"]
+                target_details["index"] = target["index"]
+                target_details["status"] = get_elasticsearch_status(target["host"], target["index"], target["port"])
+                target_details["type"] = "fluentd"
                 target_status.append(target_details)
         else:
             logger.error("No workload data found in fluentd_data.json")
+
     except Exception as e:
         logger.error("Exception in getting target status due to %s" % str(e))
     return target_status
