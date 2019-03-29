@@ -267,7 +267,7 @@ def get_target_status():
                 target_status.append(target_details)
         else:
             logger.error("No workload data found in collectd_data.json")
-
+        target_details = {}
         exsting_data = file_reader(FluentdData)
         fluent_exsting_data = json.loads(exsting_data)
         if fluent_exsting_data:
