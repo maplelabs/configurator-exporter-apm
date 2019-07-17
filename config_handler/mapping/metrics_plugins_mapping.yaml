@@ -634,6 +634,62 @@ jmeter:
      label: Listener path
      fieldName: listener_path
 
+# mapping for prometheus linux
+prometheuslinux:
+  - name: prometheuslinux
+    interval: 300
+    config:
+    - Mandatory: true
+      min: ''
+      dataType: Integer
+      max: ''
+      defaultValue: 9100
+      tooltip: "port in which node-exporter is exposed on localhost"
+      label: Port
+      fieldName: port
+
+#mapping for prometheus mysql
+prometheusmysql:
+  - name: prometheusmysql
+    interval: 300
+    config:
+    - Mandatory: true
+      min: ''
+      dataType: Integer
+      max: ''
+      defaultValue: 9104
+      tooltip: "port in which mysql-exporter is exposed on localhost"
+      label: Port
+      fieldName: port
+
+# mapping for prometheus jmx
+prometheuslinux:
+  - name: prometheusjmx
+    interval: 300
+    config:
+    - Mandatory: true
+      min: ''
+      dataType: Integer
+      max: ''
+      defaultValue: 9404
+      tooltip: "port in which jmx-exporter is exposed on localhost"
+      label: Port
+      fieldName: port
+
+#mapping for prometheus elasticsearch
+prometheusmysql:
+  - name: prometheuselasticsearch
+    interval: 300
+    config:
+    - Mandatory: true
+      min: ''
+      dataType: Integer
+      max: ''
+      defaultValue: 9206
+      tooltip: "port in which elasticsearch-exporter is exposed on localhost"
+      label: Port
+      fieldName: port
+
 #mapping for esa plugin
 #esalogstore:
 # - name: esalogstore
