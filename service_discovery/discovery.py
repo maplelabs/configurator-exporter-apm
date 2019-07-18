@@ -487,9 +487,9 @@ def discover_services():
         service_dict['pollerConfig'] = {}
         logger_dict = add_logger_config(service_dict, service)
 
-        if service in POLLER_PLUGIN:
-            final_dict = add_poller_config(service, logger_dict)
-        elif service in logger_list:
+        #if service in POLLER_PLUGIN:
+         #   final_dict = add_poller_config(service, logger_dict)
+        if service in logger_list:
             # This condition is only for esalogger
             final_dict = logger_dict
         else:
