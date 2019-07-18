@@ -9,10 +9,37 @@ import subprocess
 import re
 import psutil
 from config_handler import configurator
+import json
+import socket
 from common.util import *
 
 logger = expoter_logging(COLLECTD_MGR)
 JCMD_PID_DICT = dict()
+
+USER_SERVICES = list()
+
+# with open("/opt/configurator-exporter/service_discovery/service_port_mapping.json", "r") as disc_file:
+#    DISCOVERY_RULES = json.loads(disc_file.read())
+#for service in DISCOVERY_RULES['services']:
+#    USER_SERVICES.append(service['name'])
+
+DISCOVERY_RULES = {}
+SERVICE_PORT_MAPPING = {}
+PROMETHEUS_SERVICES = {
+    'node-exporter': 9100,
+    'mysql-exporter': 9104,
+    'redis-exporter': 9121,
+    'jmx-exporter': 9404,
+    'elasticsearch-exporter': 9206,
+    'apache-exporter': 9117,
+    'postgres-exporter': 9187
+}
+# for service in DISCOVERY_RULES['services']:
+#    if re.search('exporter', service['name']):
+#        PROMETHEUS_SERVICES[service['name']] = service['port']
+#    else:
+#        SERVICE_PORT_MAPPING[service['name']] = service['port']
+
 SERVICE_NAME = {
     "elasticsearch": "ES",
     "apache": "apache",
@@ -32,7 +59,13 @@ SERVICE_NAME = {
     "oozie": "oozie",
     "yarn": "yarn",
     "hdfs": "hdfs",
-    "spark2": "spark2"
+    "spark2": "spark2",
+    "node-exporter": "linux",
+    "mysql-exporter": "mysql",
+    "jmx-exporter": "JMX",
+    "redis-exporter": "redis",
+    "apache-exporter": "apache",
+    "elasticsearch-exporter": "elasticsearch"
 }
 SERVICES = [
     "elasticsearch",
@@ -49,7 +82,7 @@ SERVICES = [
     "zookeeper",
     "hxconnect",
     "cassandra",
-    "esalogstore",
+    "esalogstore"
 ]
 '''
 Mapping for services and the plugin to be configured for them.
@@ -72,10 +105,17 @@ SERVICE_PLUGIN_MAPPING = {
     "oozie": "oozie",
     "yarn": "yarn",
     "hdfs": "namenode",
-    "spark2": "spark"
+    "spark2": "spark",
+    "node-exporter": "prometheuslinux",
+    "redis-exporter": "prometheusredis",
+    "elasticsearch-exporter": "prometheuselasticsearch",
+    "postgres-exporter": "prometheuspostgres",
+    "mysql-exporter": "prometheusmysql",
+    "jmx-exporter": "prometheusjmx",
+    "apache-exporter": "prometheusapache"
 }
-
 POLLER_PLUGIN = ["elasticsearch"]
+JMX_PLUGINS = ["kafka.Kafka", "zookeeper"]
 HADOOP_SERVICE = {
     "yarn-rm-log": { \
          "service-name": "org.apache.hadoop.yarn.server.resourcemanager.ResourceManager",
@@ -98,9 +138,8 @@ HADOOP_SERVICE = {
          "plugin_name": "hdfs"
                         },
     "oozie-server": { \
-         "service-name": "org.apache.catalina.startup.Bootstrap",
+         "service-name": "oozie-server",
          "service-list": ["oozie-ops", "oozie-audit", "oozie-error-logs", "oozie-logs", "oozie-instrumentation", "oozie-jpa"],
-         "service-cmd-line": "oozie-server",
          "plugin_name": "oozie"
                     },
     "hdfs-datanode": { \
@@ -110,26 +149,46 @@ HADOOP_SERVICE = {
                      }
 }
 
-def add_pid_usage(pid, pid_list):
-    """Add usage stats of each pids"""
+'''
+Java services. Format for dictionary is 
+service_name: key string to search in ps cmdline
+'''
+JAVA_SERVICES = {
+    "tomcat": "org.apache.catalina.startup.Bootstrap",
+    "elasticsearch": "org.elasticsearch.bootstrap.Elasticsearch",
+    "cassandra": "org.apache.cassandra",
+    "kafka.Kafka": "kafka.Kafka",
+    "zookeeper": "org.apache.zookeeper.server.quorum.QuorumPeerMain"
+}
+DIFF_NAME_SERVICES = {
+    "apache": ["httpd", "apache2"],
+    "postgres": ["postmaster", "postgres"]
+}
+CUSTOM_SERVICES = ["tpcc", "esalogstore", "hxconnect"]
 
-    pid_detail = psutil.Process(pid)
-    if not pid_detail.is_running():
-        return
-    pid_info = {}
-    pid_info["user"] = pid_detail.username()
-    pid_info["process_id"] = pid
-    pid_info["cpuUsage"] = pid_detail.cpu_percent()
-    pid_info["memUsage"] = pid_detail.memory_percent()
-    pid_info["status"] = "running"
-    pid_list.append(pid_info)
 
-def is_service_name(pid, service_cmd_line):
-    """Check if PID is for oozie_server"""
-    pid_detail = psutil.Process(pid)
-    if re.search(service_cmd_line, str(pid_detail.cmdline())):
+def connect_to_port(port):
+    address = "127.0.0.1"
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((address, port))
+        logger.info("Port %s is listening" %str(port))
+        s.close()
         return True
-    return False
+    except socket.error, err:
+        logger.info("Port %s is not listening", str(port))
+        return False
+
+
+def discover_custom_services(service):
+    if (service == "tpcc" and os.path.exists("/opt/VDriver/.tpcc_discovery")) or \
+            (service == "hxconnect" and os.path.exists("/opt/VDriver/.hxconnect_discovery")):
+        return "agent"
+
+    elif service == "esalogstore" and os.path.exists("/opt/esa_conf.json"):
+        return "logger"
+    return ""
+
 
 def check_jmx_enabled(pid):
     """Check if jmx enabled for java process"""
@@ -137,6 +196,63 @@ def check_jmx_enabled(pid):
     if re.search("Dcom.sun.management.jmxremote", str(pid_detail.cmdline())):
         return True
     return False
+
+
+def get_process_id(service):
+    '''
+    :param service: name of the service
+    :return: return a list of PID's assosciated with the service
+    '''
+    logger.info("Get process id for service %s", service)
+    process_id = ""
+    try:
+        for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'cmdline']):
+            # Java processes
+            if service in JAVA_SERVICES:
+                if proc.info.get("name") == "java" and JAVA_SERVICES[service] in proc.info.get("cmdline"):
+                    process_id = proc.info.get("pid")
+                    if service in JMX_PLUGINS and not check_jmx_enabled(process_id):
+                        process_id = ""
+                    break
+
+            # Processes with varying names
+            elif service in DIFF_NAME_SERVICES:
+                for name in DIFF_NAME_SERVICES[service]:
+                    if name in str(proc.info.get("name")):
+                        process_id = proc.info.get("pid")
+                        break
+
+            # Non java processes
+            elif service in str(proc.info.get("name")):
+                process_id = proc.info.get("pid")
+                break
+
+        ## add_pid_usage(process_id, pids)
+        logger.info("PID %s", process_id)
+        return process_id
+    except BaseException:
+        logger.info("PID %s", process_id)
+        return process_id
+
+
+def get_hadoop_pid(service):
+    '''
+        :param service: name of the service
+        :return: return a list of PID's assosciated with the service
+        '''
+    logger.info("Get process id for service %s", service)
+    process_id = ""
+    try:
+        for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'cmdline']):
+            if service in proc.info.get("cmdline"):
+                process_id = proc.info.get("pid")
+                break
+        return process_id
+    except BaseException:
+        logger.info("PID %s", process_id)
+        return process_id
+
+
 def exec_subprocess(cmd):
     """ execute subprocess cmd """
     cmd_output = subprocess.Popen(
@@ -147,137 +263,12 @@ def exec_subprocess(cmd):
     res, err = cmd_output.communicate()
     return res
 
-def parser_jcmd(service):
-    """ Parser for jcmd """
-    pid_list = list()
-    try:
-        if not JCMD_PID_DICT:
-            java_avail = subprocess.check_call(
-                ["java", "-version"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
-            if java_avail:
-                return JCMD_PID_DICT
 
-            res = exec_subprocess("sudo jcmd | awk '{print $1 \" \" $2}'")
-            if not res:
-                return pid_list
-
-            for line in res.splitlines():
-                if not line:
-                    continue
-                out_list = line.split()
-                if len(out_list) > 1:
-                    JCMD_PID_DICT[out_list[1]] = int(out_list[0])
-
-        for service_name, pid in JCMD_PID_DICT.items():
-            if re.search(service, service_name):
-                pid_list.append(pid)
-        return pid_list
-    except:
-        logger.error("JCMD parser error")
-        return pid_list
-
-def get_hadoop_running_service_list():
-    '''
-     get hadoop services running in the client machine
-    '''
-    hadoop_running_service_list = list()
-    for name, service_name in HADOOP_SERVICE.items():
-        pid = parser_jcmd(service_name['service-name'])
-        if not pid:
-            continue
-
-        if 'service-cmd-line' in service_name.keys():
-            if is_service_name(pid[0], service_name['service-cmd-line']):
-                hadoop_running_service_list.append(name)
-            continue
-        hadoop_running_service_list.append(name)
-    return hadoop_running_service_list
-
-def get_process_id(service):
-    '''
-    :param service: name of the service
-    :return: return a list of PID's assosciated with the service along with their
-    status, memUsage, cpuUsage and user
-    '''
-    logger.info("Get process id for service %s", service)
-    pids = []
-
-    if service in ["kafka.Kafka", "zookeeper"]:
-        pid_list = parser_jcmd(service)
-
-        for pid in pid_list:
-            if check_jmx_enabled(pid):
-                add_pid_usage(pid, pids)
-
-        logger.info("PIDs %s", pids)
-        return pids
-
-    if service == "apache":
-        service = "httpd"
-        out = exec_subprocess("lsb_release -d")
-        for line in out.splitlines():
-            if "Ubuntu" in line:
-                service = "apache2"
-                break
-
-    try:
-        process_id = ""
-        for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'cmdline']):
-            # Java processes
-            if service in ["elasticsearch", "cassandra"]:
-                if proc.info.get("name") == "java" and proc.info.get(
-                        "username") == service:
-                    process_id = proc.info.get("pid")
-                    break
-
-            elif service in ["tomcat"]:
-                if proc.info.get("name") == "java" and "org.apache.catalina.startup.Bootstrap" in proc.info.get(
-                        "cmdline"):
-                    process_id = proc.info.get("pid")
-                    break
-
-            # Postgres process
-            elif service in ["postgres"]:
-                if proc.info.get("name") == "postmaster" or proc.info.get(
-                        "name") == "postgres":
-                    process_id = proc.info.get("pid")
-                    break
-            # Non java processes
-            elif service in str(proc.info.get("name")):
-                process_id = proc.info.get("pid")
-                break
-
-        add_pid_usage(process_id, pids)
-        logger.info("PIDs %s", pids)
-        return pids
-    except BaseException:
-        logger.info("PIDs %s", pids)
-        return pids
-
-
-def add_status(proc_dict):
-    '''
-    Find the status of the PID running, sleeping.
-    :param dict: dictionary return by get_process_id
-    :return: add status for the PID in th dictionary.
-    '''
-    # Add state, threads assosciated with the service PID
-    fileobj = open('/proc/%d/status' % (proc_dict["PID"]))
-    if not fileobj:
-        return None
-    lines = fileobj.readlines()
-    for line in lines:
-        if line.startswith("State:"):
-            state = (line.split())[2]
-            state = state.strip("()")
-            proc_dict["state"] = state
-        elif line.startswith("Threads:"):
-            threads = line.split()
-            threads = threads[1]
-            proc_dict["threads"] = threads
-    return proc_dict
+def check_nginx_plus():
+    """ check nginx plus service  """
+    logger.error('new in check condition')
+    res = exec_subprocess("service nginx status")
+    return res and 'Plus' in res.splitlines()[0]
 
 
 def add_ports(service_dict, service):
@@ -308,61 +299,6 @@ def add_ports(service_dict, service):
             if port not in ports:
                 ports.append(port)
     service_dict['ports'] = ports
-    return service_dict
-
-def is_discover_service(service_name, discovered_service_list):
-    """ is discivered services? """
-    if SERVICE_NAME[service_name] in discovered_service_list:
-        return True
-    return False
-
-
-def add_logger_config(service_dict, service):
-    '''
-    Add logger config
-    '''
-    service_dict["loggerConfig"] = []
-    for item in configurator.get_fluentd_plugins_mapping().keys():
-        if item.startswith(service.split(".")[0]):
-            log_config = {}
-            log_config["name"] = item
-            log_config["config"] = {}
-            log_config["config"]["filters"] = {}
-            service_dict["loggerConfig"].append(log_config)
-    return service_dict
-
-def get_logger_config_dict(service):
-    '''
-    get logger config list
-    '''
-    logger_config = dict()
-    if service not in configurator.get_fluentd_plugins_mapping().keys():
-        return None
-    logger_config["name"] = service
-    logger_config["config"] = {"filters": dict()}
-    logger.debug("get_logger_config_dict return with {0}".format(logger_config))
-    return logger_config
-
-def add_poller_config(service, service_dict):
-    '''
-    Add poller config
-    '''
-    service_dict["pollerConfig"] = {}
-    poller_config = {}
-    poller_config["config"] = {}
-
-    for key, value in SERVICE_PLUGIN_MAPPING.items():
-        if key == service:
-            poller_config["name"] = value
-            break
-
-    config = configurator.get_metrics_plugins_params(poller_config["name"])
-    for item in config["plugins"]:
-        if item.get("config") and item.get("name") == poller_config["name"]:
-            for item1 in item["config"]:
-                poller_config["config"][item1["fieldName"]] = item1["defaultValue"]
-    service_dict["pollerConfig"].update(poller_config)
-
     return service_dict
 
 
@@ -410,104 +346,174 @@ def add_agent_config(service, service_dict=None):
     logger.debug("Returning add_agent_config with {0}".format(service_dict))
     return service_dict
 
-def check_nginx_plus():
-    """ check nginx plus service  """
-    logger.error('new in check condition')
-    res = exec_subprocess("service nginx status")
-    return res and 'Plus' in res.splitlines()[0]
+
+def add_poller_config(service, service_dict):
+    '''
+    Add poller config
+    '''
+    service_dict["pollerConfig"] = {}
+    poller_config = {}
+    poller_config["config"] = {}
+
+    for key, value in SERVICE_PLUGIN_MAPPING.items():
+        if key == service:
+            poller_config["name"] = value
+            break
+
+    config = configurator.get_metrics_plugins_params(poller_config["name"])
+    for item in config["plugins"]:
+        if item.get("config") and item.get("name") == poller_config["name"]:
+            for item1 in item["config"]:
+                poller_config["config"][item1["fieldName"]] = item1["defaultValue"]
+    service_dict["pollerConfig"].update(poller_config)
+
+    return service_dict
+
+
+def add_logger_config(service_dict, service):
+    '''
+    Add logger config
+    '''
+    service_dict["loggerConfig"] = []
+    for item in configurator.get_fluentd_plugins_mapping().keys():
+        if item.startswith(service.split(".")[0]):
+            log_config = {}
+            log_config["name"] = item
+            log_config["recommend"] = True
+            log_config["config"] = {}
+            log_config["config"]["filters"] = {}
+            service_dict["loggerConfig"].append(log_config)
+    return service_dict
+
+
+def discover_hadoop_services():
+    hadoop_discovery = {}
+    hadoop_logger = dict()
+    hadoop_agent = dict()
+    for service_name in HADOOP_SERVICE.keys():
+        if get_hadoop_pid(HADOOP_SERVICE[service_name]["service-name"]):
+            logger.info("Hadoop service %s" % service_name)
+            plugin_name = HADOOP_SERVICE[service_name]['plugin_name']
+            for service in HADOOP_SERVICE[service_name]['service-list']:
+                logger.info("service detail: {}".format(service))
+                logger_dict = dict()
+                logger_dict = add_logger_config(logger_dict, service)
+                if not logger_dict:
+                    continue
+                if plugin_name not in hadoop_logger:
+                    hadoop_logger[plugin_name] = list()
+                hadoop_logger[plugin_name].append(logger_dict)
+        logger.info("hadoop loggers {0}".format(hadoop_logger))
+
+        if get_hadoop_pid("org.apache.ambari.server.controller.AmbariServer"):
+            for service in ["oozie", "hdfs", "yarn", "spark2"]:
+                logger.info("Hadoop service is %s" % service)
+                logger.debug("add_agent_config : {0}".format(add_agent_config(service)))
+                hadoop_agent[service] = add_agent_config(service)['agentConfig']
+        logger.info("hadoop agent {0}".format(hadoop_logger))
+
+        for service in ["oozie", "hdfs", "yarn", "spark2"]:
+            if not ((service in hadoop_agent) or (service in hadoop_logger)):
+                continue
+            hadoop_dict = dict()
+            hadoop_dict['pollerConfig'] = dict()
+            hadoop_dict["loggerConfig"] = hadoop_logger[service] if service in hadoop_logger else list()
+            hadoop_dict["agentConfig"] = hadoop_agent[service] if service in hadoop_agent else dict()
+            hadoop_discovery[service] = [hadoop_dict]
+        logger.info("Hadoop discovered service %s", hadoop_discovery)
+        return hadoop_discovery
+
+
+def discover_prometheus_services(discovery):
+    for service in PROMETHEUS_SERVICES:
+        # If the underlying service is running, check if its associated prometheus exporter is also running
+        # If the exporter is running, add config elements for the exporter
+        service_dict = {}
+        prometheus = connect_to_port(PROMETHEUS_SERVICES[service])
+        if (service.split('-')[0] in discovery or service in ['node-exporter', 'jmx-exporter']) and prometheus:
+            # node-exporter and jmx-exporter do not have an underlying service associated with them
+            # hence they are directly added to discovered services if the exporter is running
+            service_dict["loggerConfig"] = []
+            service_dict["agentConfig"] = {}
+            logger_dict = add_logger_config(service_dict, service)
+            logger_dict["pollerConfig"] = {}
+            final_dict = add_agent_config(service, logger_dict)
+            final_dict["agentConfig"]["recommend"] = True
+
+            # Initialize list for each service if its not already discovered.
+            # This condition is for jmx-exporter and node-exporter
+            if SERVICE_NAME[service] not in discovery:
+                discovery[SERVICE_NAME[service]] = []
+            discovery[SERVICE_NAME[service]].append(final_dict)
+    return discovery
+
 
 def discover_services():
-    '''
-    Find the services which are running on the server and return it's PID list, users, CPUUsage,
-    memUsage, Listening ports, input configuration for the plugin.
-    :return:
-    '''
+    # Starting discovery services
     logger.info("Discover service started")
     discovery = {}
-    for service in SERVICES:
-        if (service == "tpcc" and os.path.exists("/opt/VDriver/.tpcc_discovery")) or \
-                (service == "hxconnect" and os.path.exists("/opt/VDriver/.hxconnect_discovery")):
-            port_dict = {}
-            port_dict["loggerConfig"] = []
-            port_dict["agentConfig"] = {}
-            final_dict = add_agent_config(service, port_dict)
-            discovery[SERVICE_NAME[service]] = []
-            discovery[SERVICE_NAME[service]].append(final_dict)
-        elif service == "esalogstore" and os.path.exists("/opt/esa_conf.json"):
-            port_dict["loggerConfig"] = []
-            port_dict["agentConfig"] = {}
-            final_dict = add_logger_config(port_dict, service)
-            discovery[SERVICE_NAME[service]] = []
-            discovery[SERVICE_NAME[service]].append(final_dict)
+    service_list = set()
+    logger_list = set()
 
-        pid_list = get_process_id(service)
-        if not pid_list:
+    for service in SERVICE_PORT_MAPPING:
+        # If the port for a given service is open, add the service to service_list
+        discovered = connect_to_port(SERVICE_PORT_MAPPING[service])
+        if discovered:
+            service_list.add(service)
+
+    for service in CUSTOM_SERVICES:
+        # If the services in CUSTOM_SERVICES (tpcc, esalogstore, hxconnect) are discovered, add them to service_list
+        discovered = discover_custom_services(service)
+        if not discovered:
             continue
+        if discovered == 'logger':
+            # This condition is for esalogstore plugin, which is a standalone logger without an agent plugin
+            logger_list.add(service)
+        service_list.add(service)
+
+    for service in SERVICES:
+        # For all services, check if the service, or its associated java service has a pid.
+        # If a pid can be associated with the service, add it to service list
+        pid = get_process_id(service)
+        if pid:
+            service_list.add(service)
+
+    for service in service_list:
+        # For all services in service_list, add config for agent, loggers and pollers.
+        # This file is dedicated to agent discovery, and hence the poller config will be empty, except for elasticsearch
+        service_dict = {}
+        service_dict['loggerConfig'] = []
+        service_dict['agentConfig'] = {}
+        service_dict['pollerConfig'] = {}
+        logger_dict = add_logger_config(service_dict, service)
+
+        #if service in POLLER_PLUGIN:
+         #   final_dict = add_poller_config(service, logger_dict)
+        if service in logger_list:
+            # This condition is only for esalogger
+            final_dict = logger_dict
+        else:
+            final_dict = add_agent_config(service, logger_dict)
+            final_dict["agentConfig"]["recommend"] = False
         discovery[SERVICE_NAME[service]] = []
-        for item in pid_list:
-            service_pid_dict = {}
-            service_pid_dict["PID"] = []
+        discovery[SERVICE_NAME[service]].append(final_dict)
 
-            # Add PID, cpuUsage, memUsage, status to service_discovery
-            service_pid_dict["PID"] = item["process_id"]
-            service_pid_dict["user"] = item["user"]
-            service_pid_dict["cpuUsage"] = item["cpuUsage"]
-            service_pid_dict["memUsage"] = item["memUsage"]
-            service_pid_dict["status"] = item["status"]
-
-            # Add state, threads assosciated with the service PID
-            status_dict = add_status(service_pid_dict)
-
-            # Add listening ports assosciated with the service PID
-            port_dict = add_ports(status_dict, service)
-
-            if service in POLLER_PLUGIN:
-                port_dict["loggerConfig"] = []
-                port_dict["agentConfig"] = {}
-                final_dict = add_poller_config(service, port_dict)
-            else:
-                logger_dict = add_logger_config(port_dict, service)
-                logger_dict["pollerConfig"] = {}
-                final_dict = add_agent_config(service, logger_dict)
-
-            discovery[SERVICE_NAME[service]].append(final_dict)
+    # Check if nginxplus process is running, if nginx has been discovered
     if 'nginx' in discovery and check_nginx_plus():
-        logger.info('in oonnnn')
         var = discovery.pop('nginx')[0]
         var['agentConfig'] = {'name':'nginxplus'}
         discovery['nginxplus'] = [var]
 
-    # Hadoop Log Start
-    hadoop_logger = dict()
-    hadoop_agent = dict()
-    for service_name in get_hadoop_running_service_list():
-        logger.info("Hadoop services are %s" %service_name)
-        plugin_name = HADOOP_SERVICE[service_name]['plugin_name']
-        for service in HADOOP_SERVICE[service_name]['service-list']:
-            logger.info("service detail: {}".format(service))
-            logger_dict = get_logger_config_dict(service)
-            if not logger_dict:
-                continue
-            if plugin_name not in hadoop_logger:
-                hadoop_logger[plugin_name] = list()
-            hadoop_logger[plugin_name].append(logger_dict)
-    logger.info("hadoop loggers {0}".format(hadoop_logger))
+    # Call discover_hadoop_services which handles the discovery of all hadoop services, add it to discovery dict
+    hadoop_plugins = discover_hadoop_services()
+    discovery.update(hadoop_plugins)
 
-        # Hadoop plugin Start
-    if parser_jcmd("org.apache.ambari.server.controller.AmbariServer"):
-        for service in ["oozie", "hdfs", "yarn", "spark2"]:
-            logger.info("Hadoop service is %s" %service)
-            logger.debug("add_agent_config : {0}".format(add_agent_config(service)))
-            hadoop_agent[service] = add_agent_config(service)['agentConfig']
-    logger.info("hadoop agent {0}".format(hadoop_logger))
+    discovery = discover_prometheus_services(discovery)
 
-    for service in ["oozie", "hdfs", "yarn", "spark2"]:
-        if not ((service in hadoop_agent) or (service in hadoop_logger)):
-            continue
-        hadoop_dict = dict()
-        hadoop_dict['pollerConfig'] = dict()
-        hadoop_dict["loggerConfig"] = hadoop_logger[service] if service in hadoop_logger else list()
-        hadoop_dict["agentConfig"] = hadoop_agent[service] if service in hadoop_agent else dict()
-        discovery[service] = [hadoop_dict]
-    logger.info("Discovered service %s", discovery)
+    for service_name in discovery:
+        # If prometheus plugin is not discovered for a service, set recommend = True for the agent plugin
+        if len(discovery[service_name]) == 1:
+            discovery[service_name][0]['agentConfig']['recommend'] = True
+
+    logger.info("Discovered services: %s" %str(discovery))
     return discovery
