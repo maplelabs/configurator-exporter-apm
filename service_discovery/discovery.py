@@ -379,6 +379,7 @@ def add_logger_config(service_dict, service):
         if item.startswith(service.split(".")[0]):
             log_config = {}
             log_config["name"] = item
+            log_config["recommend"] = True
             log_config["config"] = {}
             log_config["config"]["filters"] = {}
             service_dict["loggerConfig"].append(log_config)
