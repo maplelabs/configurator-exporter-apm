@@ -60,6 +60,7 @@ SERVICE_NAME = {
     "yarn": "yarn",
     "hdfs": "hdfs",
     "spark2": "spark2",
+    "jvm": "JVM",
     "node-exporter": "linux",
     "mysql-exporter": "mysql",
     "jmx-exporter": "JMX",
@@ -82,7 +83,8 @@ SERVICES = [
     "zookeeper",
     "hxconnect",
     "cassandra",
-    "esalogstore"
+    "esalogstore",
+    "jvm"
 ]
 '''
 Mapping for services and the plugin to be configured for them.
@@ -106,6 +108,7 @@ SERVICE_PLUGIN_MAPPING = {
     "yarn": "yarn",
     "hdfs": "namenode",
     "spark2": "spark",
+    "jvm": "jvm",
     "node-exporter": "prometheuslinux",
     "redis-exporter": "prometheusredis",
     "elasticsearch-exporter": "prometheuselasticsearch",
@@ -198,6 +201,19 @@ def check_jmx_enabled(pid):
     return False
 
 
+def get_jcmd_result():
+    pid = ""
+    try:
+        res = exec_subprocess("sudo jcmd | grep -v 'sun.tools.jcmd'")
+        if res:
+            print "Sendind pid for jcmd"
+            for process in res.splitlines():
+                return process.split()[0]
+        return ""
+    except Exception as err:
+	logger.error("Error in getting jcmd command output")
+
+
 def get_process_id(service):
     '''
     :param service: name of the service
@@ -226,6 +242,9 @@ def get_process_id(service):
             elif service in str(proc.info.get("name")):
                 process_id = proc.info.get("pid")
                 break
+
+	    elif service == "jvm":
+	        process_id = get_jcmd_result()
 
         ## add_pid_usage(process_id, pids)
         logger.info("PID %s", process_id)
@@ -321,10 +340,6 @@ def add_agent_config(service, service_dict=None):
     config = configurator.get_metrics_plugins_params(agent_config["name"])
     for item in config["plugins"]:
         if item.get("config") and item.get("name") == agent_config["name"]:
-            # Config specific to jvm plugin
-            if agent_config["name"] == "jvm":
-                agent_config["config"]["process"] = service
-                break
             if agent_config["name"] == "kafkatopic":
                 agent_config["config"]["process"] = service
                 for parameter in item["config"]:
