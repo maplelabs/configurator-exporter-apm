@@ -454,7 +454,7 @@ def discover_prometheus_services(discovery):
             logger_dict = add_logger_config(service_dict, service)
             logger_dict["pollerConfig"] = {}
             final_dict = add_agent_config(service, logger_dict)
-            final_dict["agentConfig"]["recommend"] = False
+            final_dict["agentConfig"]["recommend"] = True
             final_dict["agentConfig"]["selected"] = False
 
             # Initialize list for each service if its not already discovered.
@@ -511,7 +511,7 @@ def discover_services():
             final_dict = logger_dict
         else:
             final_dict = add_agent_config(service, logger_dict)
-            final_dict["agentConfig"]["recommend"] = True
+            final_dict["agentConfig"]["recommend"] = False
             final_dict["agentConfig"]["selected"] = False
         discovery[SERVICE_NAME[service]] = []
         discovery[SERVICE_NAME[service]].append(final_dict)
@@ -528,10 +528,10 @@ def discover_services():
 
     discovery = discover_prometheus_services(discovery)
 
-    #for service_name in discovery:
+    for service_name in discovery:
         # If prometheus plugin is not discovered for a service, set recommend = True for the agent plugin
-    #    if len(discovery[service_name]) == 1:
-    #        discovery[service_name][0]['agentConfig']['recommend'] = True
+        if len(discovery[service_name]) == 1:
+            discovery[service_name][0]['agentConfig']['recommend'] = True
 
     logger.info("Discovered services: %s" %str(discovery))
     return discovery
