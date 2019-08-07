@@ -61,6 +61,7 @@ SERVICE_NAME = {
     "hdfs": "hdfs",
     "spark2": "spark2",
     "jvm": "JVM",
+    "jmeter": "jmeter",
     "node-exporter": "linux",
     "mysql-exporter": "mysql",
     "jmx-exporter": "JMX",
@@ -84,7 +85,8 @@ SERVICES = [
     "hxconnect",
     "cassandra",
     "esalogstore",
-    "jvm"
+    "jvm",
+    "jmeter"
 ]
 '''
 Mapping for services and the plugin to be configured for them.
@@ -109,6 +111,7 @@ SERVICE_PLUGIN_MAPPING = {
     "hdfs": "namenode",
     "spark2": "spark",
     "jvm": "jvm",
+    "jmeter": "jmeter",
     "node-exporter": "prometheuslinux",
     "redis-exporter": "prometheusredis",
     "elasticsearch-exporter": "prometheuselasticsearch",
@@ -161,7 +164,8 @@ JAVA_SERVICES = {
     "elasticsearch": "org.elasticsearch.bootstrap.Elasticsearch",
     "cassandra": "org.apache.cassandra",
     "kafka.Kafka": "kafka.Kafka",
-    "zookeeper": "org.apache.zookeeper.server.quorum.QuorumPeerMain"
+    "zookeeper": "org.apache.zookeeper.server.quorum.QuorumPeerMain",
+    "jmeter": "jmeter/apache-jmeter-5.1.1/bin/ApacheJMeter.jar"
 }
 DIFF_NAME_SERVICES = {
     "apache": ["httpd", "apache2"],
