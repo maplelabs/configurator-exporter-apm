@@ -122,6 +122,7 @@ SERVICE_PLUGIN_MAPPING = {
 }
 POLLER_PLUGIN = ["elasticsearch"]
 JMX_PLUGINS = ["kafka.Kafka", "zookeeper"]
+JVM_ENABLED_PLUGINS = ["kafka.Kafka", "zookeeper", "elasticsearch", "tomcat"]
 HADOOP_SERVICE = {
     "yarn-rm-log": { \
          "service-name": "org.apache.hadoop.yarn.server.resourcemanager.ResourceManager",
@@ -498,6 +499,11 @@ def discover_services():
         pid = get_process_id(service)
         if pid:
             service_list.add(service)
+
+    for service in JVM_ENABLED_PLUGINS:
+        if service in service_list and 'jvm' in service_list:
+            service_list.remove('jvm')
+            break
 
     for service in service_list:
         # For all services in service_list, add config for agent, loggers and pollers.
