@@ -60,7 +60,7 @@ SERVICE_NAME = {
     "yarn": "yarn",
     "hdfs": "hdfs",
     "spark2": "spark2",
-    "jvm": "JVM",
+    "jvm": "JMX",
     "jmeter": "jmeter",
     "node-exporter": "linux",
     "mysql-exporter": "mysql",
@@ -467,6 +467,12 @@ def discover_prometheus_services(discovery):
             if SERVICE_NAME[service] not in discovery:
                 discovery[SERVICE_NAME[service]] = []
             discovery[SERVICE_NAME[service]].append(final_dict)
+	
+	for service in JVM_ENABLED_PLUGINS:
+            if SERVICE_NAME[service] in discovery and SERVICE_NAME['jmx-exporter'] in discovery:
+                discovery.pop('JMX')
+                break
+
     return discovery
 
 
