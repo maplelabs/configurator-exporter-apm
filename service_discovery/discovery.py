@@ -60,7 +60,7 @@ SERVICE_NAME = {
     "yarn": "yarn",
     "hdfs": "hdfs",
     "spark2": "spark2",
-    "jvm": "JVM",
+    "jvm": "JMX",
     "jmeter": "jmeter",
     "node-exporter": "linux",
     "mysql-exporter": "mysql",
@@ -122,6 +122,7 @@ SERVICE_PLUGIN_MAPPING = {
 }
 POLLER_PLUGIN = ["elasticsearch"]
 JMX_PLUGINS = ["kafka.Kafka", "zookeeper"]
+JVM_ENABLED_PLUGINS = ["kafka.Kafka", "zookeeper", "elasticsearch", "tomcat"]
 HADOOP_SERVICE = {
     "yarn-rm-log": { \
          "service-name": "org.apache.hadoop.yarn.server.resourcemanager.ResourceManager",
@@ -466,6 +467,12 @@ def discover_prometheus_services(discovery):
             if SERVICE_NAME[service] not in discovery:
                 discovery[SERVICE_NAME[service]] = []
             discovery[SERVICE_NAME[service]].append(final_dict)
+	
+	for service in JVM_ENABLED_PLUGINS:
+            if SERVICE_NAME[service] in discovery and SERVICE_NAME['jmx-exporter'] in discovery:
+                discovery.pop('JMX')
+                break
+
     return discovery
 
 
@@ -498,6 +505,11 @@ def discover_services():
         pid = get_process_id(service)
         if pid:
             service_list.add(service)
+
+    for service in JVM_ENABLED_PLUGINS:
+        if service in service_list and 'jvm' in service_list:
+            service_list.remove('jvm')
+            break
 
     for service in service_list:
         # For all services in service_list, add config for agent, loggers and pollers.
