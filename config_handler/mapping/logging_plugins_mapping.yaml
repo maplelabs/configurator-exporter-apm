@@ -653,3 +653,19 @@ hdfs-datanode:
     message: ${record['message']}
   match:
     flush_interval: 30s
+
+jmeter-logs:
+  source:
+    '@type': tail
+    'format': csv
+    'path': '/home/centos/log.jtl'
+    'pos_file': '/var/log/td-agent/jmeter.pos'
+    'keys': timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+  transform:
+    node: '#{Socket.gethostname}'
+    file: '${tag_suffix[1]}'
+    _plugin: 'jmeter-logs'
+    _documentType: 'jmeterDetails'
+    time: ${require 'time'; time.to_time.to_i}
+  match:
+    flush_interval: 30s
