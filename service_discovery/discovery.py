@@ -32,7 +32,9 @@ PROMETHEUS_SERVICES = {
     'jmx-exporter': 9404,
     'elasticsearch-exporter': 9206,
     'apache-exporter': 9117,
-    'postgres-exporter': 9187
+    'postgres-exporter': 9187,
+    'nginx-exporter': 9113,
+    'jmeter-exporter': 9270
 }
 # for service in DISCOVERY_RULES['services']:
 #    if re.search('exporter', service['name']):
@@ -67,7 +69,9 @@ SERVICE_NAME = {
     "jmx-exporter": "JMX",
     "redis-exporter": "redis",
     "apache-exporter": "apache",
-    "elasticsearch-exporter": "elasticsearch"
+    "elasticsearch-exporter": "elasticsearch",
+    "nginx-exporter": "nginx",
+    "jmeter-exporter": "jmeter"
 }
 SERVICES = [
     "elasticsearch",
@@ -118,7 +122,9 @@ SERVICE_PLUGIN_MAPPING = {
     "postgres-exporter": "prometheuspostgres",
     "mysql-exporter": "prometheusmysql",
     "jmx-exporter": "prometheusjmx",
-    "apache-exporter": "prometheusapache"
+    "apache-exporter": "prometheusapache",
+    "nginx-exporter": "prometheusnginx",
+    "jmeter-exporter": "prometheusjmeter"
 }
 POLLER_PLUGIN = ["elasticsearch"]
 JMX_PLUGINS = ["kafka.Kafka", "zookeeper"]
