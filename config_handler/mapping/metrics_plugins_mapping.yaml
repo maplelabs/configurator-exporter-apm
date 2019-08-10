@@ -722,6 +722,50 @@ prometheuselasticsearch:
      label: Interval
      fieldName: interval
 
+# mapping for prometheus nginx
+prometheusnginx:
+ - name: prometheusnginx
+   interval: 300
+   config:
+   - Mandatory: true
+     min: ''
+     dataType: Integer
+     max: ''
+     defaultValue: 9113
+     tooltip: "port in which node-exporter is exposed on localhost"
+     label: Port
+     fieldName: port
+   - Mandatory: true
+     min: ''
+     dataType: Integer
+     max: ''
+     defaultValue: 300
+     tooltip: Polling Interval
+     label: Interval
+     fieldName: interval
+
+# mapping for prometheus jmeter
+prometheusjmeter:
+ - name: prometheusjmeter
+   interval: 300
+   config:
+   - Mandatory: true
+     min: ''
+     dataType: Integer
+     max: ''
+     defaultValue: 9270
+     tooltip: "port in which node-exporter is exposed on localhost"
+     label: Port
+     fieldName: port
+   - Mandatory: true
+     min: ''
+     dataType: Integer
+     max: ''
+     defaultValue: 300
+     tooltip: Polling Interval
+     label: Interval
+     fieldName: interval
+
 #mapping for esa plugin
 #esalogstore:
 # - name: esalogstore
