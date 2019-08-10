@@ -482,6 +482,7 @@ def discover_services():
     discovery = {}
     service_list = set()
     logger_list = set()
+    logger_list.add("jmeter")
 
     for service in SERVICE_PORT_MAPPING:
         # If the port for a given service is open, add the service to service_list
@@ -546,7 +547,7 @@ def discover_services():
 
     for service_name in discovery:
         # If prometheus plugin is not discovered for a service, set recommend = True for the agent plugin
-        if len(discovery[service_name]) == 1:
+        if len(discovery[service_name]) == 1 and service_name not in logger_list:
             discovery[service_name][0]['agentConfig']['recommend'] = True
 
     logger.info("Discovered services: %s" %str(discovery))
