@@ -732,7 +732,7 @@ prometheusnginx:
      dataType: Integer
      max: ''
      defaultValue: 9113
-     tooltip: "port in which node-exporter is exposed on localhost"
+     tooltip: "port in which nginx-exporter is exposed on localhost"
      label: Port
      fieldName: port
    - Mandatory: true
@@ -754,7 +754,7 @@ prometheusjmeter:
      dataType: Integer
      max: ''
      defaultValue: 9270
-     tooltip: "port in which node-exporter is exposed on localhost"
+     tooltip: "port in which jmeter-exporter is exposed on localhost"
      label: Port
      fieldName: port
    - Mandatory: true
