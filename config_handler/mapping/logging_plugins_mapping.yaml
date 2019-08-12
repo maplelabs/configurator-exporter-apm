@@ -654,7 +654,7 @@ hdfs-datanode:
   match:
     flush_interval: 30s
 
-jmeter-logs:
+jmeter:
   source:
     '@type': tail
     'format': csv
@@ -664,7 +664,7 @@ jmeter-logs:
   transform:
     node: '#{Socket.gethostname}'
     file: '${tag_suffix[1]}'
-    _plugin: 'jmeter-logs'
+    _plugin: 'jmeter'
     _documentType: 'jmeterDetails'
     time: ${require 'time'; time.to_time.to_i}
   match:
