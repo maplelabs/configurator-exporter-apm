@@ -634,6 +634,44 @@ jmeter:
      label: Listener path
      fieldName: listener_path
 
+# mapping for elasticsearch plugin
+elasticsearchagent:
+ - name: elasticsearchagent
+   interval: 300
+   config:
+   - Mandatory: true
+     min: ''
+     dataType: Integer
+     max: ''
+     defaultValue: 9200
+     tooltip: Port on which elasticsearch master node is listening.
+     label: Port
+     fieldName: port
+   - Mandatory: true
+     min: ''
+     dataType: String
+     max: ''
+     defaultValue: 'http'
+     tooltip: SSL protocol used to connect to elasticsearch
+     label: ES Protocol
+     fieldName: es_protocol
+   - Mandatory: true
+     fieldName: documentsTypes
+     tooltip: document Types to be collected
+     label: DocumentsTypes
+     dataType: list
+     multiselect: true
+     defaultValue: ['clusterStats', 'nodeStats', 'indexStats']
+     options:
+      - label: 'clusterStats'
+        value: 'clusterStats'
+      - label: 'nodeStats'
+        value: 'nodeStats'
+      - label: 'indexStats'
+        value: 'indexStats'
+     min: ''
+     max: ''
+
 # mapping for prometheus linux
 prometheuslinux:
  - name: prometheuslinux
