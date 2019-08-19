@@ -43,6 +43,7 @@ PROMETHEUS_SERVICES = {
 #        SERVICE_PORT_MAPPING[service['name']] = service['port']
 
 SERVICE_NAME = {
+    "topstats": "linux",
     "elasticsearch": "ES",
     "apache": "apache",
     "tomcat": "tomcat",
@@ -96,6 +97,7 @@ SERVICES = [
 Mapping for services and the plugin to be configured for them.
 '''
 SERVICE_PLUGIN_MAPPING = {
+    "topstats": "topstats",
     "elasticsearch": "elasticsearch",
     "apache": "apache",
     "tomcat": "tomcat",
@@ -555,9 +557,12 @@ def discover_services():
 
     discovery = discover_prometheus_services(discovery)
 
+    recommend_off = logger_list
+    recommend_off.add("linux")
+
     for service_name in discovery:
         # If prometheus plugin is not discovered for a service, set recommend = True for the agent plugin
-        if len(discovery[service_name]) == 1 and service_name not in logger_list:
+        if len(discovery[service_name]) == 1 and service_name not in recommend_off:
             discovery[service_name][0]['agentConfig']['recommend'] = True
 
     logger.info("Discovered services: %s" %str(discovery))
