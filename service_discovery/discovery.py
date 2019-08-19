@@ -43,6 +43,7 @@ PROMETHEUS_SERVICES = {
 #        SERVICE_PORT_MAPPING[service['name']] = service['port']
 
 SERVICE_NAME = {
+    "topstats": "linux",
     "elasticsearch": "ES",
     "apache": "apache",
     "tomcat": "tomcat",
@@ -96,6 +97,7 @@ SERVICES = [
 Mapping for services and the plugin to be configured for them.
 '''
 SERVICE_PLUGIN_MAPPING = {
+    "topstats": "topstats",
     "elasticsearch": "elasticsearch",
     "apache": "apache",
     "tomcat": "tomcat",
@@ -406,7 +408,7 @@ def add_logger_config(service_dict, service):
             log_config = {}
             log_config["name"] = item
             log_config["recommend"] = True
-            log_config["selected"] = False
+            log_config["selected"] = True
             log_config["config"] = {}
             log_config["config"]["filters"] = {}
             service_dict["loggerConfig"].append(log_config)
@@ -468,6 +470,9 @@ def discover_prometheus_services(discovery):
             final_dict["agentConfig"]["recommend"] = True
             final_dict["agentConfig"]["selected"] = False
 
+	    if service == 'jmeter-exporter':
+                discovery[SERVICE_NAME[service]][0]['loggerConfig'][0]['recommend'] = False
+
             # Initialize list for each service if its not already discovered.
             # This condition is for jmx-exporter and node-exporter
             if SERVICE_NAME[service] not in discovery:
@@ -489,6 +494,7 @@ def discover_services():
     service_list = set()
     logger_list = set()
     logger_list.add("jmeter")
+    service_list.add("topstats")
 
     for service in SERVICE_PORT_MAPPING:
         # If the port for a given service is open, add the service to service_list
@@ -551,9 +557,12 @@ def discover_services():
 
     discovery = discover_prometheus_services(discovery)
 
+    recommend_off = logger_list
+    recommend_off.add("linux")
+
     for service_name in discovery:
         # If prometheus plugin is not discovered for a service, set recommend = True for the agent plugin
-        if len(discovery[service_name]) == 1 and service_name not in logger_list:
+        if len(discovery[service_name]) == 1 and service_name not in recommend_off:
             discovery[service_name][0]['agentConfig']['recommend'] = True
 
     logger.info("Discovered services: %s" %str(discovery))
