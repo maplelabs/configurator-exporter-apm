@@ -406,7 +406,7 @@ def add_logger_config(service_dict, service):
             log_config = {}
             log_config["name"] = item
             log_config["recommend"] = True
-            log_config["selected"] = False
+            log_config["selected"] = True
             log_config["config"] = {}
             log_config["config"]["filters"] = {}
             service_dict["loggerConfig"].append(log_config)
@@ -468,6 +468,9 @@ def discover_prometheus_services(discovery):
             final_dict["agentConfig"]["recommend"] = True
             final_dict["agentConfig"]["selected"] = False
 
+	    if service == 'jmeter-exporter':
+                discovery[SERVICE_NAME[service]][0]['loggerConfig'][0]['recommend'] = False
+
             # Initialize list for each service if its not already discovered.
             # This condition is for jmx-exporter and node-exporter
             if SERVICE_NAME[service] not in discovery:
@@ -489,6 +492,7 @@ def discover_services():
     service_list = set()
     logger_list = set()
     logger_list.add("jmeter")
+    service_list.add("topstats")
 
     for service in SERVICE_PORT_MAPPING:
         # If the port for a given service is open, add the service to service_list
