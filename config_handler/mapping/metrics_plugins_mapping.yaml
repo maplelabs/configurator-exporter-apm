@@ -499,7 +499,7 @@ topstats:
      Mandatory: true
      dataType: list
      multiselect: false
-     defaultValue: 'Top 5 CPU util'
+     defaultValue: 'CPU'
      options:
       - label: 'Top 5 CPU util'
         value: 'CPU'
