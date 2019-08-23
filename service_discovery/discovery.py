@@ -98,7 +98,7 @@ Mapping for services and the plugin to be configured for them.
 '''
 SERVICE_PLUGIN_MAPPING = {
     "topstats": "topstats",
-    "elasticsearch": "elasticsearch",
+    "elasticsearch": "elasticsearchagent",
     "apache": "apache",
     "tomcat": "tomcat",
     "haproxy": "haproxy",
