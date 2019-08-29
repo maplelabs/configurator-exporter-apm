@@ -174,7 +174,7 @@ JAVA_SERVICES = {
     "cassandra": "org.apache.cassandra",
     "kafka.Kafka": "kafka.Kafka",
     "zookeeper": "org.apache.zookeeper.server.quorum.QuorumPeerMain",
-    "jmeter": "jmeter/apache-jmeter-5.1.1/bin/ApacheJMeter.jar"
+    "jmeter": "ApacheJMeter.jar"
 }
 DIFF_NAME_SERVICES = {
     "apache": ["httpd", "apache2"],
@@ -243,6 +243,14 @@ def get_process_id(service):
                     if service in JMX_PLUGINS and not check_jmx_enabled(process_id):
                         process_id = ""
                     break
+		if service == "jmeter":
+                    if proc.info.get("name") == "java" and len(proc.info.get("cmdline")) > 2:
+                        if JAVA_SERVICES[service] in proc.info.get("cmdline")[2]:
+                            process_id = proc.info.get("pid")
+                            if service in JMX_PLUGINS and not check_jmx_enabled(process_id):
+                                process_id = ""
+                            break
+
 
             # Processes with varying names
             elif service in DIFF_NAME_SERVICES:
