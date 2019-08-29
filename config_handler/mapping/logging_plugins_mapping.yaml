@@ -665,7 +665,7 @@ jmeter:
     node: '#{Socket.gethostname}'
     file: '${tag_suffix[1]}'
     _plugin: 'jmeter'
-    _documentType: 'jmeterDetails'
+    _documentType: 'jmeterLogs'
     time: ${require 'time'; time.to_time.to_i}
   match:
     flush_interval: 30s
