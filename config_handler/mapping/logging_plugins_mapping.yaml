@@ -195,6 +195,7 @@ nginx-access:
     time_format: '%d/%b/%Y:%H:%M:%S %z'
     #expression: '^(?<host>[^ ]*)\s-(?<user>[^-]*)-\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path>[^"]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<response_time>[^"]*)\"$'
     expression: '^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path>[^"]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$'
+    'types': request_time:float,upstream_connect_time:float,upstream_header_time:float,upstream_response_time:float,size:integer
   transform:
     node: '#{Socket.gethostname}'
     file: '${tag_suffix[1]}'
@@ -661,6 +662,7 @@ jmeter:
     'path': '/home/centos/log.jtl'
     'pos_file': '/var/log/td-agent/jmeter.pos'
     'keys': timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+    'types': elapsed:float,bytes:integer,sentBytes:integer,IdleTime:float,Connect:float
   transform:
     node: '#{Socket.gethostname}'
     file: '${tag_suffix[1]}'
