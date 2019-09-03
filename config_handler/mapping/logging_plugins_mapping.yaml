@@ -55,6 +55,27 @@ mysql-general:
   match:
     flush_interval: 30s
 
+# mysql slow query log
+mysql-slowquery:
+  source:
+    '@type': tail
+    path: '/var/lib/mysql/ip-*slow.log'
+    pos_file: '/var/log/td-agent/mysql-slowquery.pos'
+  multiline:
+    format_firstline: '/#\sTime:/'
+    expression:
+    - '/^#\sTime:\s(?<time>[^#]*)\n#\sUser@Host:\s(?<userHost>[^#]*)\n#\sQuery_time:\s(?<query_time>[^\s]*)\s*Lock_time:\s(?<lock_time>[^\s]*)\s*Rows_sent:\s(?<rows_sent>[^\s]*)\s*Rows_examined:\s(?<rows_examined>[^\s]*)\s*SET\stimestamp=(?<timestamp>[^;]*);\n(?<query>[^;]*);$/'
+    types: 'query_time:float, lock_time:float, rows_sent:integer, rows_examined:integer'
+  transform:
+    node: '#{Socket.gethostname}'
+    time: ${require 'time'; time.to_time.to_i}
+    file: '${tag_suffix[1]}'
+    _plugin: 'mysql'
+    _documentType: 'mysqlSlowQueryLogs'
+    level: 'info'
+  match:
+    flush_interval: 30s
+
 #mysql-slow:
 #  source:
 #    '@type': mysql_slow_query
