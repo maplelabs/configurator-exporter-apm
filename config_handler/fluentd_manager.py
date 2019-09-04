@@ -320,6 +320,7 @@ class FluentdPluginManager:
                 lines.extend(['\t</parse>', '</filter>'])
             source_tag = '*.'+ source_tag
         elif 'parse' in data:
+	    time_format = ""
             # Add parser filter. if data.get('match').has_key('tag'):
             if 'tag' in data.get('match'):
                 lines.append('\n<filter ' + source_tag + '.' +
@@ -328,11 +329,15 @@ class FluentdPluginManager:
 		lines.append('\n<filter ' + source_tag + '*>')
 	    lines.extend(['\t@type parser', '\tkey_name message', '\t<parse>'])
 	    for key, val in data.get('parse', {}).iteritems():
+		if key == "time_format":
+                        time_format = val
 		if key == "expressions":
 		    for v in val:
 			lines.append('\t\t' + "<pattern>")
 			lines.append('\t\t\t' + 'format regexp')
 			lines.append('\t\t\t' + 'expression ' + v)
+			if time_format:
+                                lines.append('\t\t\t' + 'time_format ' + time_format)
 			lines.append('\t\t' + "</pattern>")
 		    continue
 		lines.append('\t\t' + key  + ' ' + val)
