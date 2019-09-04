@@ -212,19 +212,21 @@ nginx-access:
     path: '/var/log/nginx/access.log'
     pos_file: '/var/log/td-agent/nginx_access.pos'
   parse:
-    '@type': regexp
+    '@type': multi_format
     time_format: '%d/%b/%Y:%H:%M:%S %z'
-    #expression: '^(?<host>[^ ]*)\s-(?<user>[^-]*)-\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path>[^"]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<response_time>[^"]*)\"$'
-    expression: '^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path>[^"]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$'
+    expressions:
+     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path1>\/[a-z,A-Z,\/]*)(?<id1>\d+)(?<path2>[a-z,A-Z,\/]+)(?<id2>\d+)(?<path3>[a-z,A-Z,\/]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
+     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path1>\/[a-z,A-Z,\/]*)(?<id>\d+)(?<path2>[a-z,A-Z,\/]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
+     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path>[^"]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
     'types': request_time:float,upstream_connect_time:float,upstream_header_time:float,upstream_response_time:float,size:integer
   transform:
-    node: '#{Socket.gethostname}'
-    file: '${tag_suffix[1]}'
+    node: '#{Socket.gethostname}' 
+    file: '${tag_suffix[1]}' 
     _plugin: 'nginx'
     _documentType: 'nginxAccessLogs'
     time: ${require 'time'; time.to_time.to_i}
     level: 'info'
-    message: "${record['method']+' '+record['path']}"
+    path: ${if record['path'] != nil then record['path'] elsif record['id2'] == nil then record['path1'] + '[id]' + record['path2'] else record['path1'] + '[id]' + record['path2'] + '[id]' + record['path3'] end}
   match:
     flush_interval: 30s
 
