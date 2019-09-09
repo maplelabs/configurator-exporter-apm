@@ -11,6 +11,7 @@ import psutil
 from config_handler import configurator
 import json
 import socket
+import yaml
 from common.util import *
 
 logger = expoter_logging(COLLECTD_MGR)
@@ -207,6 +208,33 @@ def discover_custom_services(service):
         return "logger"
     return ""
 
+def discover_log_path():
+    current_dir = os.getcwd()
+    os.chdir("/")
+    out = subprocess.check_output(["find", ".", "-name", "elasticsearch.yml"])
+    files_path = out.split("\n")
+    try:
+        for path in files_path:
+            with open(path) as f:
+                if 'path.logs'in f.read():
+                    conf_path = path
+    except:
+        pass
+    grep_out = subprocess.check_output(["grep", "path.logs", conf_path])
+    log_path = grep_out.split("\n")[0].split(':')[1].strip()
+    log_list = os.listdir(log_path)
+    del_log_list = []
+    for item in log_list:
+        if not item.endswith("log")  or "deprecation" in item or "slowlog" in item: 
+            del_log_list.append(item)
+    log_file = list(set(log_list)-set(del_log_list))
+    with open("/opt/configurator-exporter/config_handler/mapping/logging_plugins_mapping.yaml") as f:
+        log_conf = yaml.load(f)
+    log_conf["elasticsearch-general"]["source"]["path"] = log_path +"/"+log_file[0]
+
+    with open("/opt/configurator-exporter/config_handler/mapping/logging_plugins_mapping.yaml", "w") as f:
+        yaml.dump(log_conf, f)
+    os.chdir(current_dir)
 
 def check_jmx_enabled(pid):
     """Check if jmx enabled for java process"""
@@ -591,6 +619,6 @@ def discover_services():
         # If prometheus plugin is not discovered for a service, set recommend = True for the agent plugin
         #if len(discovery[service_name]) == 1 and service_name not in recommend_off:
             #discovery[service_name][0]['agentConfig']['recommend'] = True
-
+    discover_log_path()
     logger.info("Discovered services: %s" %str(discovery))
     return discovery
