@@ -54,6 +54,7 @@ SERVICE_NAME = {
     "nginx": "nginx",
     "tpcc": "tpcc",
     "kafka.Kafka": "kafka",
+    "kafkajmx": "kafka",
     "zookeeper": "zookeeper",
     "hxconnect": "hxconnect",
     "cassandra": "cassandra",
@@ -109,6 +110,7 @@ SERVICE_PLUGIN_MAPPING = {
     "nginx": "nginx",
     "tpcc": "tpcc",
     "kafka.Kafka": "kafkatopic",
+    "kafkajmx": "kafkajmx",
     "zookeeper": "zookeeperjmx",
     "hxconnect": "hxconnect",
     "cassandra": "cassandra",
@@ -532,6 +534,9 @@ def discover_services():
             service_list.remove('jvm')
             break
 
+    if "kafka.Kafka" in service_list:
+        service_list.add("kafkajmx")
+
     for service in service_list:
         # For all services in service_list, add config for agent, loggers and pollers.
         # This file is dedicated to agent discovery, and hence the poller config will be empty, except for elasticsearch
@@ -550,7 +555,9 @@ def discover_services():
             final_dict = add_agent_config(service, logger_dict)
             final_dict["agentConfig"]["recommend"] = False
             final_dict["agentConfig"]["selected"] = False
-        discovery[SERVICE_NAME[service]] = []
+
+	if SERVICE_NAME[service] not in discovery:
+            discovery[SERVICE_NAME[service]] = []
         discovery[SERVICE_NAME[service]].append(final_dict)
 
     # Check if nginxplus process is running, if nginx has been discovered
@@ -565,13 +572,25 @@ def discover_services():
 
     discovery = discover_prometheus_services(discovery)
 
-    recommend_off = logger_list
-    recommend_off.add("linux")
+    recommend_agents_off = set()
+    recommend_agents_off.update(logger_list)
+    recommend_agents_off.add("linux")
+
+    for service_name in discovery:
+        for plugin in discovery[service_name]:
+            if (plugin['agentConfig']["name"]).startswith("prometheus"):
+                recommend_agents_off.add(service_name)
 
     for service_name in discovery:
         # If prometheus plugin is not discovered for a service, set recommend = True for the agent plugin
-        if len(discovery[service_name]) == 1 and service_name not in recommend_off:
-            discovery[service_name][0]['agentConfig']['recommend'] = True
+        if service_name not in recommend_agents_off:
+            for plugin in discovery[service_name]:
+                plugin['agentConfig']['recommend'] = True
+
+    #for service_name in discovery:
+        # If prometheus plugin is not discovered for a service, set recommend = True for the agent plugin
+        #if len(discovery[service_name]) == 1 and service_name not in recommend_off:
+            #discovery[service_name][0]['agentConfig']['recommend'] = True
 
     logger.info("Discovered services: %s" %str(discovery))
     return discovery
