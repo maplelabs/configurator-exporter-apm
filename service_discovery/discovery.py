@@ -209,23 +209,13 @@ def discover_custom_services(service):
     return ""
 
 def discover_log_path():
-    current_dir = os.getcwd()
-    os.chdir("/")
     try:
-        out = subprocess.check_output(["find", ".", "-name", "elasticsearch.yml"])
-        files_path = out.split("\n")
-        if len(files_path) == 1 and files_path[0] == '':
-            raise Exception
+        with open("/usr/lib/systemd/system/elasticsearch.service") as fp:
+            for line in fp:
+                if "LOG_DIR" in line:
+                    log_path = line.splitlines()[0].split('=')[2]
     except:
         return
-
-    for path in files_path:
-        if path != '':
-            with open(path) as f: 
-                if 'path.logs'in f.read():
-                    conf_path = path
-    grep_out = subprocess.check_output(["grep", "path.logs", conf_path])
-    log_path = grep_out.split("\n")[0].split(':')[1].strip()
     log_list = os.listdir(log_path)
     del_log_list = []
     for item in log_list:
@@ -238,7 +228,6 @@ def discover_log_path():
 
     with open("/opt/configurator-exporter/config_handler/mapping/logging_plugins_mapping.yaml", "w") as f:
         yaml.dump(log_conf, f)
-    os.chdir(current_dir)
 
 def check_jmx_enabled(pid):
     """Check if jmx enabled for java process"""
