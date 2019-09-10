@@ -211,15 +211,19 @@ def discover_custom_services(service):
 def discover_log_path():
     current_dir = os.getcwd()
     os.chdir("/")
-    out = subprocess.check_output(["find", ".", "-name", "elasticsearch.yml"])
-    files_path = out.split("\n")
     try:
-        for path in files_path:
-            with open(path) as f:
+        out = subprocess.check_output(["find", ".", "-name", "elasticsearch.yml"])
+        files_path = out.split("\n")
+        if len(files_path) == 1 and files_path[0] == '':
+            raise Exception
+    except:
+        return
+
+    for path in files_path:
+        if path != '':
+            with open(path) as f: 
                 if 'path.logs'in f.read():
                     conf_path = path
-    except:
-        pass
     grep_out = subprocess.check_output(["grep", "path.logs", conf_path])
     log_path = grep_out.split("\n")[0].split(':')[1].strip()
     log_list = os.listdir(log_path)
