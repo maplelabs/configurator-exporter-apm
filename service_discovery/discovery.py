@@ -599,7 +599,7 @@ def discover_services():
 
     for service_name in discovery:
         for plugin in discovery[service_name]:
-            if (plugin['agentConfig']["name"]).startswith("prometheus"):
+            if plugin['agentConfig'].get('name') and (plugin['agentConfig']["name"]).startswith("prometheus"):
                 recommend_agents_off.add(service_name)
 
     for service_name in discovery:
