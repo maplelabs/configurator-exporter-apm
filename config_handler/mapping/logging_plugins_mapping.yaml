@@ -2,7 +2,7 @@
 mysql-error:
   source:
     '@type': tail
-    path: '/var/log/mysql/error.log, /var/log/mysql/mysql-error.log, /var/log/mysqld.log'
+    path: '/var/log/mysql/error.log, /var/log/mysql/mysql-error.log, /var/log/mysqld.err'
     pos_file: '/var/log/td-agent/mysql-error.pos'
 #    format: '/(?<time>[^ ]* [^ ]*)\s*\[(?<level>\S+)\]\s(?<message>.*)$/'
 #    format: 'multi_format'
@@ -28,7 +28,7 @@ mysql-error:
 mysql-general:
   source:
     '@type': tail
-    path: '/var/log/mysql/mysql.log, /var/log/mysql.log'
+    path: '/var/log/mysql/mysql.log, /var/log/mysql.log, /var/log/mysqld.log'
     pos_file: '/var/log/td-agent/mysql-general-query.pos'
 #    format: '/(?<time>[^ ]* [^ ]*)\s*(?<id>\S+)\s(?<command>[^ ]*)\s(?<argument>[^\t].*)$/'
 #    format: 'multi_format'
