@@ -89,7 +89,7 @@ HEARTBEAT = "heartbeat"
 HEARTBEAT_INTERVAL = "heartbeat_interval"
 
 COMPONENTS = "components"
-DOCUMENT = "doc"
+DOCUMENT = "_doc"
 
 CUSTOM_HOSTNAME = "custom_hostname"
 NODEID = "NodeId"
