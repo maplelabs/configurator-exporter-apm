@@ -13,6 +13,7 @@ mysql-error:
   parse:
     '@type': multi_format
     expressions:
+     - '/(?<time>[^ ]* [^ ]*)\s*(?<id>\d*)\s*\[(?<level>\S+)\]\s(?<message>.*)$/'
      - '/(?<time>[^ ]* [^ ]*)\s*\[(?<level>\S+)\]\s(?<message>.*)$/'
      - '/(?<time>[^ ]* [^ ]*)\s*(?<message>.*)$/'
   transform:
@@ -21,7 +22,7 @@ mysql-error:
     file: '${tag_suffix[1]}'
     _plugin: 'mysql'
     _documentType: 'mysqlErrorLogs'
-    level: ${n_level='info'; if record.key?('level') == nil then n_level else record['level'].downcase end}
+    level: ${n_level='info'; if record['level'] == nil then n_level else record['level'].downcase end}
   match:
     flush_interval: 30s
 
