@@ -400,6 +400,12 @@ def add_agent_config(service, service_dict=None):
             agent_config["config"]["port"] = service_dict["ports"][0]
             if agent_config["config"]["port"] == "443":
                 agent_config["config"]["secure"] = "true"
+    # topstats agent plugin is on demand (only explicit operations i.e. start/stop is allowed)
+    # topstats plugin start/stop is not part of bulk operation
+    elif service == "topstats":
+        service_dict["agentConfig"]["on_demand"] = True
+    else:
+        service_dict["agentConfig"]["on_demand"] = False
 
     service_dict["agentConfig"].update(agent_config)
     logger.debug("Returning add_agent_config with {0}".format(service_dict))
