@@ -439,6 +439,8 @@ def add_logger_config(service_dict, service):
     '''
     Add logger config
     '''
+    discover_log_path()
+    log_mapping = configurator.get_fluentd_plugins_mapping()
     service_dict["loggerConfig"] = []
     for item in configurator.get_fluentd_plugins_mapping().keys():
         if item.startswith(service.split(".")[0]):
@@ -448,6 +450,7 @@ def add_logger_config(service_dict, service):
             log_config["selected"] = True
             log_config["config"] = {}
             log_config["config"]["filters"] = {}
+            log_config["config"]["log_paths"] = log_mapping[item]["source"]["path"]
             service_dict["loggerConfig"].append(log_config)
     return service_dict
 
@@ -618,6 +621,5 @@ def discover_services():
         # If prometheus plugin is not discovered for a service, set recommend = True for the agent plugin
         #if len(discovery[service_name]) == 1 and service_name not in recommend_off:
             #discovery[service_name][0]['agentConfig']['recommend'] = True
-    discover_log_path()
     logger.info("Discovered services: %s" %str(discovery))
     return discovery
