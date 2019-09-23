@@ -42,9 +42,10 @@ mysql-general:
   parse:
     '@type': multi_format
     expressions:
-     - '/(?<time>[^ ]* [^ ]*)\s*(?<id>\S+)\s(?<command>[^ ]*)\s(?<argument>[^\t].*)$/'
-     - '/\"(?<time>[^\]]*)\"\W+(?<user1>\S+)\W+(?<user2>\w+)\W+(?<host>\w+)\W+(?<IP>(\d+\.\d+\.\d+\.\d+))\W+(?<pid1>\d+)\W+(?<pid2>\d+)\W+(?<command>.\w*)\W+(?<argument>.*)\"/'
-     - '/\"(?<time>[^\]]*)\"\W+(?<user1>\S+)\W+(?<user2>\w+)\W+(?<host>\w+)\W+(?<pid1>\d+)\W+(?<pid2>\d+)\W+(?<command>.\w*)\W+(?<argument>.*)\"/'
+     - '/^\s+(?<id>\S+)\s(?<command>[^\s\d]*)\s(?<argument>[^\t].*)$/'
+     - '/(?<event_time>[\d]+\s*[^\s]*)\s*(?<id>\d+)\s(?<command>[^\s]*)\s(?<argument>[^\t].*)$/'
+     - '/\"(?<event_time>[^\]]*)\"\W+(?<user1>\S+)\W+(?<user2>\w+)\W+(?<host>\w+)\W+(?<IP>(\d+\.\d+\.\d+\.\d+))\W+(?<pid1>\d+)\W+(?<pid2>\d+)\W+(?<command>.\w*)\W+(?<argument>.*)\"/'
+     - '/\"(?<event_time>[^\]]*)\"\W+(?<user1>\S+)\W+(?<user2>\w+)\W+(?<host>\w+)\W+(?<pid1>\d+)\W+(?<pid2>\d+)\W+(?<command>.\w*)\W+(?<argument>.*)\"/'
   transform:
     node: '#{Socket.gethostname}'
     time: ${require 'time'; time.to_time.to_i}
