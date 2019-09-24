@@ -6,3 +6,4 @@ elasticsearch:
  host: "Host Ip required"
  port: "Port required "
  index: "Index required"
+ store_type: "Store type required"

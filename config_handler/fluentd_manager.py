@@ -148,10 +148,12 @@ class FluentdPluginManager:
             temp['source'] = {}
             temp['source']['tag'] = x_plugin.get('tags', {})
             temp['name'] = x_plugin.get(NAME)
+	    temp['collection_type'] = 'logger'
 
             if x_plugin.get(NAME) in self.plugin_config.keys():
                 plugin = self.plugin_config.get(
                     x_plugin.get(NAME))
+		temp['collection_type'] = plugin.get('collection_type', '')
                 if x_plugin.get(NAME) == 'esalogstore':
                     temp['esalogsdownload'] = {}
                     temp['esalogsdownload'].update(plugin.get('esalogsdownload'))
@@ -389,23 +391,56 @@ class FluentdPluginManager:
                     lines.append('\n<match ' + source_tag + '.' +
                                  data.get('match').get('tag') + '>')
                     data.get('match').pop('tag')
+
+		if data.get('collection_type', '') == 'metric':
+                    if x_targets.get("store_type") and x_targets['store_type'] == 'metric':
+                        lines.append('\n<match ' + source_tag + '*>')
+                        for key, val in x_targets.iteritems():
+                            if key == "type":
+                                key = "@" + key
+                            if key == "index":
+                                key += "_name"
+                                val = val+"_write"
+                            if key == "enable":
+                                continue
+                            lines.append('\t' + key + ' ' + val)
+                        lines.append('\t' + 'type_name' + ' ' + DOCUMENT)
+                        for key, val in data.get('match', {}).iteritems():
+                            lines.append('\t' + str(key) + ' ' + str(val))
+                        lines.append('</match>')
+                    #else:
+                        #self.logger.info("Metric datasource not passed in fluentd config")
+                        #return
                 else:
-                    lines.append('\n<match ' + source_tag + '*>')
+                    if x_targets.get("store_type") and x_targets['store_type'] == 'logger':
+                        lines.append('\n<match ' + source_tag + '*>')
+                        for key, val in x_targets.iteritems():
+                            if key == "type":
+                                key = "@" + key
+                            if key == "index":
+                                key += "_name"
+                                val = val+"_write"
+                            if key == "enable":
+                                continue
+                            lines.append('\t' + key + ' ' + val)
+			lines.append('\t' + 'type_name' + ' ' + DOCUMENT)
 
-                for key, val in x_targets.iteritems():
-                    if key == "type":
-                        key = "@" + key
-                    if key == "index":
-                        key += "_name"
-                        val = val+"_write"
-                    if key == "enable":
-                        continue
-                    lines.append('\t' + key + ' ' + val)
-                lines.append('\t' + 'type_name' + ' ' + DOCUMENT)
+                        for key, val in data.get('match', {}).iteritems():
+                            lines.append('\t' + str(key) + ' ' + str(val))
+                        lines.append('</match>')
+                #else:
+                #    lines.append('\n<match ' + source_tag + '*>')
 
-                for key, val in data.get('match', {}).iteritems():
-                    lines.append('\t' + str(key) + ' ' + str(val))
-                lines.append('</match>')
+                #for key, val in x_targets.iteritems():
+                #    if key == "type":
+                #        key = "@" + key
+                #    if key == "index":
+                #        key += "_name"
+                #        val = val+"_write"
+                #    if key == "enable":
+                #        continue
+                #    lines.append('\t' + key + ' ' + val)
+                #lines.append('\t' + 'type_name' + ' ' + DOCUMENT)
 
 	# Add match, if clear is present in rewrite tag filter
 	if 'rewrite_tag_filter' in data and 'clear' in data.get('rewrite_tag_filter',{}):
