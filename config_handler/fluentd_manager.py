@@ -148,12 +148,12 @@ class FluentdPluginManager:
             temp['source'] = {}
             temp['source']['tag'] = x_plugin.get('tags', {})
             temp['name'] = x_plugin.get(NAME)
-	    temp['collection_type'] = 'logger'
+            temp['collection_type'] = 'logger'
 
             if x_plugin.get(NAME) in self.plugin_config.keys():
                 plugin = self.plugin_config.get(
                     x_plugin.get(NAME))
-		temp['collection_type'] = plugin.get('collection_type', '')
+                temp['collection_type'] = plugin.get('collection_type', '')
                 if x_plugin.get(NAME) == 'esalogstore':
                     temp['esalogsdownload'] = {}
                     temp['esalogsdownload'].update(plugin.get('esalogsdownload'))
@@ -392,7 +392,7 @@ class FluentdPluginManager:
                                  data.get('match').get('tag') + '>')
                     data.get('match').pop('tag')
 
-		if data.get('collection_type', '') == 'metric':
+                if data.get('collection_type', '') == 'metric':
                     if x_targets.get("store_type") and x_targets['store_type'] == 'metric':
                         lines.append('\n<match ' + source_tag + '*>')
                         for key, val in x_targets.iteritems():
