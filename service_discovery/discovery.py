@@ -448,7 +448,7 @@ def add_logger_config(service_dict, service):
             log_config["name"] = item
             log_config["recommend"] = True
             log_config["selected"] = True
-	    if 'collection_type' in value and value['collection_type'] == 'metric':
+            if 'collection_type' in value and value['collection_type'] == 'metric':
                 log_config['fluentd_type'] = "fluentd_agent"
             else:
                 log_config['fluentd_type'] = "fluentd_logging"
