@@ -442,7 +442,7 @@ def add_logger_config(service_dict, service):
     discover_log_path()
     log_mapping = configurator.get_fluentd_plugins_mapping()
     service_dict["loggerConfig"] = []
-    for item in configurator.get_fluentd_plugins_mapping().keys():
+    for item, value in configurator.get_fluentd_plugins_mapping().iteritems():
         if item.startswith(service.split(".")[0]):
             log_config = {}
             log_config["name"] = item
