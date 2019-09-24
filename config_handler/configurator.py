@@ -272,10 +272,15 @@ def get_target_status():
         fluent_exsting_data = json.loads(exsting_data)
         if fluent_exsting_data:
             for target in fluent_exsting_data['targets']:
+                target_details = {}
                 target_details["name"] = target["name"]
                 target_details["index"] = target["index"]
                 target_details["status"] = get_elasticsearch_status(target["host"], target["index"], target["port"])
                 target_details["type"] = "fluentd"
+                if 'store_type' in target and target['store_type'] == 'metric':
+                    target_details["store_type"] = "metric"
+                else:
+                    target_details["store_type"] = "logger"
                 target_status.append(target_details)
         else:
             logger.error("No workload data found in fluentd_data.json")

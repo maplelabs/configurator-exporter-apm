@@ -27,6 +27,7 @@ mysql-error:
     flush_interval: 30s
 
 mysql-general:
+  collection_type: metric
   source:
     '@type': tail
     path: '/var/log/mysql/mysql.log, /var/log/mysql.log, /var/log/mysqld.log'
@@ -59,6 +60,7 @@ mysql-general:
 
 # mysql slow query log
 mysql-slowquery:
+  collection_type: metric
   source:
     '@type': tail
     path: '/var/lib/mysql/ip-*slow.log'
@@ -114,6 +116,7 @@ apache-error:
    match:
      flush_interval: 30s
 apache-access:
+   collection_type: metric
    source:
      '@type': tail
 #     format: '/^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)" (?<response_time>[^ ]*))?$/'
@@ -209,6 +212,7 @@ nginx-error:
 
 #NGINX access logging mapping
 nginx-access:
+  collection_type: metric
   source:
     '@type': tail
     path: '/var/log/nginx/access.log'
@@ -235,6 +239,7 @@ nginx-access:
 
 #postgres logging mapping
 postgres-general:
+  collection_type: metric
   source:
     '@type': tail
     path: '/var/lib/pgsql/9.6/data/pg_log/postgresql-Sun.log, /var/lib/pgsql/9.6/data/pg_log/postgresql-Sat.log, /var/lib/pgsql/9.6/data/pg_log/postgresql-Fri.log, /var/lib/pgsql/9.6/data/pg_log/postgresql-Thu.log, /var/lib/pgsql/9.6/data/pg_log/postgresql-Wed.log,  /var/lib/pgsql/9.6/data/pg_log/postgresql-Tue.log, /var/lib/pgsql/9.6/data/pg_log/postgresql-Mon.log, /var/log/postgresql/postgresql-10-main.log'
@@ -682,6 +687,7 @@ hdfs-datanode:
     flush_interval: 30s
 
 jmeter:
+  collection_type: metric
   source:
     '@type': tail
     'format': csv
