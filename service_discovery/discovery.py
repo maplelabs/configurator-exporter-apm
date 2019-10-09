@@ -212,19 +212,30 @@ def discover_log_path():
     try:
         with open("/usr/lib/systemd/system/elasticsearch.service") as fp:
             for line in fp:
-                if "LOG_DIR" in line:
-                    log_path = line.splitlines()[0].split('=')[2]
+                if "ES_PATH_CONF" in line:
+                    es_path = line.splitlines()[0].split('=')[2]
+                    with open(es_path+"/elasticsearch.yml") as es_fp:
+                        esconf = yaml.load(es_fp)
+                        esconf_keys = esconf.keys()
+                        if "path" in esconf_keys:
+                            log_path = esconf["path"]["logs"]
+                        else:
+                            log_path = esconf["path.logs"]
+
+                        if "cluster" in esconf_keys:
+                            log_name = esconf["cluster"]["name"]
+                        elif "cluster.name" in esconf_keys:
+                            log_name = esconf["cluster.name"]
+                        else:
+                            log_name = "elasticsearch"
+                    break 
+
     except:
         return
-    log_list = os.listdir(log_path)
-    del_log_list = []
-    for item in log_list:
-        if not item.endswith("log")  or "deprecation" in item or "slowlog" in item: 
-            del_log_list.append(item)
-    log_file = list(set(log_list)-set(del_log_list))
+    log_file = log_path+"/"+log_name+".log"
     with open("/opt/configurator-exporter/config_handler/mapping/logging_plugins_mapping.yaml") as f:
         log_conf = yaml.load(f)
-    log_conf["elasticsearch-general"]["source"]["path"] = log_path +"/"+log_file[0]
+    log_conf["elasticsearch-general"]["source"]["path"] = log_file
 
     with open("/opt/configurator-exporter/config_handler/mapping/logging_plugins_mapping.yaml", "w") as f:
         yaml.dump(log_conf, f)
