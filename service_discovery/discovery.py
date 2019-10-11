@@ -300,8 +300,8 @@ def get_process_id(service):
                 process_id = proc.info.get("pid")
                 break
 
-	    elif service == "jvm":
-	        process_id = get_jcmd_result()
+	if service == "jvm":
+	    process_id = get_jcmd_result()
 
         ## add_pid_usage(process_id, pids)
         logger.info("PID %s", process_id)
