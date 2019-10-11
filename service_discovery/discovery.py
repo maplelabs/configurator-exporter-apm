@@ -277,13 +277,15 @@ def get_process_id(service):
                     if service in JMX_PLUGINS and not check_jmx_enabled(process_id):
                         process_id = ""
                     break
-		if service == "jmeter":
-                    if proc.info.get("name") == "java" and len(proc.info.get("cmdline")) > 2:
-                        if JAVA_SERVICES[service] in proc.info.get("cmdline")[2]:
+            if service == "jmeter":
+                if proc.info.get("name") == "java":
+                    for cmnd in proc.info.get("cmdline"):
+                        if re.search(JAVA_SERVICES[service], cmnd):
                             process_id = proc.info.get("pid")
-                            if service in JMX_PLUGINS and not check_jmx_enabled(process_id):
-                                process_id = ""
                             break
+                    if service in JMX_PLUGINS and not check_jmx_enabled(process_id):
+                        process_id = ""
+                        break
 
 
             # Processes with varying names
@@ -298,8 +300,8 @@ def get_process_id(service):
                 process_id = proc.info.get("pid")
                 break
 
-	    elif service == "jvm":
-	        process_id = get_jcmd_result()
+	if service == "jvm":
+	    process_id = get_jcmd_result()
 
         ## add_pid_usage(process_id, pids)
         logger.info("PID %s", process_id)
