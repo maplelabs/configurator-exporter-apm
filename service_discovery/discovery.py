@@ -212,19 +212,30 @@ def discover_log_path():
     try:
         with open("/usr/lib/systemd/system/elasticsearch.service") as fp:
             for line in fp:
-                if "LOG_DIR" in line:
-                    log_path = line.splitlines()[0].split('=')[2]
+                if "ES_PATH_CONF" in line:
+                    es_path = line.splitlines()[0].split('=')[2]
+                    with open(es_path+"/elasticsearch.yml") as es_fp:
+                        esconf = yaml.load(es_fp)
+                        esconf_keys = esconf.keys()
+                        if "path" in esconf_keys:
+                            log_path = esconf["path"]["logs"]
+                        else:
+                            log_path = esconf["path.logs"]
+
+                        if "cluster" in esconf_keys:
+                            log_name = esconf["cluster"]["name"]
+                        elif "cluster.name" in esconf_keys:
+                            log_name = esconf["cluster.name"]
+                        else:
+                            log_name = "elasticsearch"
+                    break 
+
     except:
         return
-    log_list = os.listdir(log_path)
-    del_log_list = []
-    for item in log_list:
-        if not item.endswith("log")  or "deprecation" in item or "slowlog" in item: 
-            del_log_list.append(item)
-    log_file = list(set(log_list)-set(del_log_list))
+    log_file = log_path+"/"+log_name+".log"
     with open("/opt/configurator-exporter/config_handler/mapping/logging_plugins_mapping.yaml") as f:
         log_conf = yaml.load(f)
-    log_conf["elasticsearch-general"]["source"]["path"] = log_path +"/"+log_file[0]
+    log_conf["elasticsearch-general"]["source"]["path"] = log_file
 
     with open("/opt/configurator-exporter/config_handler/mapping/logging_plugins_mapping.yaml", "w") as f:
         yaml.dump(log_conf, f)
@@ -334,35 +345,31 @@ def check_nginx_plus():
     return res and 'Plus' in res.splitlines()[0]
 
 
-def add_ports(service_dict, service):
+def add_ports(pid, service):
     '''
     Add listening ports for the PID
     :param dict: dictionary returned by add_status
     :param service: name of the service
     :return: add listening ports for the PID to the dictionary
     '''
-    logger.debug("Add ports %s %s", service_dict, service)
+    #logger.debug("Add ports %s %s", service_dict, service)
     ports = []
-    if service == "apache":
-        cmd = "netstat -anp | grep httpd"
+    cmd = "netstat -anp | grep httpd"
 
-        out = exec_subprocess("lsb_release -d")
-        for line in out.splitlines():
-            if "Ubuntu" in line:
-                cmd = "netstat -anp | grep apache2"
-                break
-    else:
-        cmd = "netstat -anp | grep %s" % (service_dict["PID"])
+    out = exec_subprocess("lsb_release -d")
+    for line in out.splitlines():
+        if "Ubuntu" in line:
+            cmd = "netstat -anp | grep apache2"
+            break
 
     out = exec_subprocess(cmd)
     for line in out.splitlines():
         line = line.split()
-        if (line[5] == 'LISTEN') and (service == "apache" or str(service_dict['PID']) in line[6]):
+        if (line[5] == 'LISTEN') and (service == "apache" or str(pid) in line[6]):
             port = (line[3].split(':')[-1])
             if port not in ports:
                 ports.append(port)
-    service_dict['ports'] = ports
-    return service_dict
+    return ports
 
 
 def add_agent_config(service, service_dict=None):
@@ -555,13 +562,15 @@ def discover_services():
             # This condition is for esalogstore plugin, which is a standalone logger without an agent plugin
             logger_list.add(service)
         service_list.add(service)
-
+    apache_ports = None
     for service in SERVICES:
         # For all services, check if the service, or its associated java service has a pid.
         # If a pid can be associated with the service, add it to service list
         pid = get_process_id(service)
         if pid:
             service_list.add(service)
+            if service == "apache":
+                apache_ports = add_ports(pid, service)
 
     for service in JVM_ENABLED_PLUGINS:
         if service in service_list and 'jvm' in service_list:
@@ -578,6 +587,8 @@ def discover_services():
         service_dict['loggerConfig'] = []
         service_dict['agentConfig'] = {}
         service_dict['pollerConfig'] = {}
+        if service == "apache":
+            service_dict['ports'] = apache_ports
         logger_dict = add_logger_config(service_dict, service)
 
         #if service in POLLER_PLUGIN:
