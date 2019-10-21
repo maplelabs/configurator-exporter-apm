@@ -125,10 +125,14 @@ apache-access:
      path: '/var/log/apache2/access.log, /var/log/httpd/access_log'
      pos_file: '/var/log/td-agent/apache_access.pos'
    parse:
-     '@type': regexp
+     '@type': multi_format
      time_format: '%d/%b/%Y:%H:%M:%S %z'
-     expression: '^(?<host>[^ ]*(?:\s+[^ ]+)*) [\-](?<user>[\w\ ]*)[\-] \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)"(?:(| )(?<response_time>[^ ]*)))?$'
-     types: 'response_time:integer, size:float'
+     expressions:
+     - '/^(?<host>[^ ]*(?:\s+[^ ]+)*) [\-](?<user>[\w\ ]*)[\-] \[(?<time>[^\]]*)\] "(?<method>\S+)\s(?<path1>\/[a-z,A-Z,\/]*)(?<id1>\d+)(?<path2>[a-z,A-Z,\/]+)(?<id2>\d+)(?<path3>[a-z,A-Z,\/]*)\s(?<header>[^ ]*)\" (?<code>[^ ]*) (?<size>[^ ]*) (?:"(?<referer>[^\"]*)" "(?<agent>[^\"]*)" (?:(|)(?<response_time>[^ ]*)))?$/'
+     - '/^(?<host>[^ ]*(?:\s+[^ ]+)*) [\-](?<user>[\w\ ]*)[\-] \[(?<time>[^\]]*)\] "(?<method>\S+) (?<path1>\/[a-z,A-Z,\/]*)(?<id>\d+)(?<path2>[a-z,A-Z,\/]*)\s(?<header>[^ ]*)\" (?<code>[^ ]*) (?<size>[^ ]*) (?:"(?<referer>[^\"]*)" "(?<agent>[^\"]*)" (?:(|)(?<response_time>[^ ]*)))?$/'
+     - '/^(?<host>[^ ]*(?:\s+[^ ]+)*) [\-](?<user>[\w\ ]*)[\-] \[(?<time>[^\]]*)\] "(?<method>\S+)\s(?<path>[^"]*\?)([^\s]*)\s(?<header>[^ ]*)\" (?<code>[^ ]*) (?<size>[^ ]*) (?:"(?<referer>[^\"]*)" "(?<agent>[^\"]*)" (?:(|)(?<response_time>[^ ]*)))?$/'
+     - '/^(?<host>[^ ]*(?:\s+[^ ]+)*) [\-](?<user>[\w\ ]*)[\-] \[(?<time>[^\]]*)\] "(?<method>\S+)\s(?<path>[^"]*)\s(?<header>[^ ]*)\" (?<code>[^ ]*) (?<size>[^ ]*) (?:"(?<referer>[^\"]*)" "(?<agent>[^\"]*)" (?:(|)(?<response_time>[^ ]*)))?$/'
+      types: 'response_time:integer, size:float'
    transform:
      node: '#{Socket.gethostname}'
 #       time: '#{Time.now.to_f}'
@@ -137,7 +141,8 @@ apache-access:
      _documentType: 'apacheAccessLogs'
      time: ${require 'time'; time.to_time.to_i}
      level: 'info'
-     message: "${record['method'] + ' ' + record['path'] + ' ' + record['code']}"
+#     message: "${record['method'] + ' ' + record['path'] + ' ' + record['code']}"
+     path: ${if record['path'] != nil then record['path'] elsif record['id2'] == nil then record['path1'] + '[id]' + record['path2'] else record['path1'] + '[id]' + record['path2'] + '[id]' + record['path3'] end}
    match:
      flush_interval: 30s
 
