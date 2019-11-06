@@ -143,6 +143,8 @@ apache-access:
      level: 'info'
 #     message: "${record['method'] + ' ' + record['path'] + ' ' + record['code']}"
      path: ${if record['path'] != nil then record['path'] elsif record['id2'] == nil then record['path1'] + '[id]' + record['path2'] else record['path1'] + '[id]' + record['path2'] + '[id]' + record['path3'] end}
+   geotag:
+     geoip_lookup_keys: host
    match:
      flush_interval: 30s
 
