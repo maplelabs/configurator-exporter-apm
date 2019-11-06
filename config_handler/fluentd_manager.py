@@ -162,6 +162,8 @@ class FluentdPluginManager:
                 if x_plugin.get(CONFIG, {}).get('log_paths'):
                     temp['source']['path'] = x_plugin[CONFIG]['log_paths']
                 temp['transform'] = plugin.get('transform')
+                if plugin.get('geotag'):
+                    temp['geotag'] = plugin.get('geotag')
                 if x_plugin.get(NAME) == 'esalogstore':
                     hosts = None
                     esa_path = '/var/log/td-agent/esa_logs'
@@ -373,6 +375,29 @@ class FluentdPluginManager:
                 # tags = [str(x) for x in self.tags + data.get('source').get('tag')]
                 lines.append('\t\t' + '_tag_' + str(tag_key) + ' ' + '"' + str(tag_val) + '"')
         lines.extend(['\t</record>', '</filter>'])
+
+        # Add geotagging filter
+        if 'geotag' in data:
+            if 'tag' in data.get('match'):
+                lines.append('\n<filter ' + source_tag + '.' +
+                             data.get('match').get('tag', []) + '>')
+            else:
+                lines.append('\n<filter ' + source_tag + '*>')
+            lines.append('\t@type geoip')
+            for key, val in data.get('geotag', {}).iteritems():
+                lines.append('\t' + key + ' ' + val)
+            lines.append('\tbackend_library geoip2_c')
+            lines.append('\t<record>')
+            lines.append('\t\tcity ${city.names.en["host"]}')
+            lines.append('\t\tlatitude ${location.latitude["host"]}')
+            lines.append('\t\tlongitude ${location.longitude["host"]}')
+            lines.append('\t\tcountry ${country.iso_code["host"]}')
+            lines.append('\t\tcountry_name ${country.names.en["host"]}')
+            lines.append('\t\tpostal_code ${postal.code["host"]}')
+            lines.append('\t\tregion_code ${subdivisions.0.iso_code["host"]}')
+            lines.append('\t\tregion_name ${subdivisions.0.names.en["host"]}')
+            lines.append('\t</record>')
+            lines.append('</filter>')
 
 	# Add grep filter.
         if data.get('usr_filter', None):
