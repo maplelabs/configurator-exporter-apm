@@ -71,7 +71,8 @@ def get_collectd_process():
     API endpoint for get collectd status
     :return:
     """
-    return {COLLECTD_SERVICE: get_collectd_status(), VERSION: get_collectd_version()}
+    #return {COLLECTD_SERVICE: get_collectd_status(), VERSION: get_collectd_version()}
+    return {COLLECTD_SERVICE: get_collectd_status()}
 
 
 def enabled_fluentd(data):
@@ -96,7 +97,8 @@ def get_fluentd_process():
     API endpoint for get fluentd status
     :return:
     """
-    return {FLUENTD_SERVICE: get_fluentd_status(), VERSION: get_fluentd_version()}
+    #return {FLUENTD_SERVICE: get_fluentd_status(), VERSION: get_fluentd_version()}
+    return {FLUENTD_SERVICE: get_fluentd_status()}
 
 
 def set_fluentd_config(logging):

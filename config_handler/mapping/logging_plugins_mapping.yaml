@@ -125,9 +125,13 @@ apache-access:
      path: '/var/log/apache2/access.log, /var/log/httpd/access_log'
      pos_file: '/var/log/td-agent/apache_access.pos'
    parse:
-     '@type': regexp
+     '@type': multi_format
      time_format: '%d/%b/%Y:%H:%M:%S %z'
-     expression: '^(?<host>[^ ]*(?:\s+[^ ]+)*) [\-](?<user>[\w\ ]*)[\-] \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)"(?:(| )(?<response_time>[^ ]*)))?$'
+     expressions:
+       - /^(\"(?<location>(?<country>[\w]*)\s(?<region>[\w]*)\s(?<city>[\w]*)\s(?<lat>[\S]*)\s(?<long>[\S]*))\"\s)?(?<host>[^\s]*(?:\s+[^\s]+)*)\s[\-](?<user>[\w\s]*)[\-]\s\[(?<time>[^\]]*)\]\s"(?<method>\S+)\s(?<path1>\/[a-z,A-Z,\/]*)(?<id1>\d+)(?<path2>[a-z,A-Z,\/]+)(?<id2>\d+)(?<path3>[a-z,A-Z,\/]*)\s(?<header>[^\s]*)\"\s(?<code>[^\s]*)\s(?<size>[^\s]*)\s(?:"(?<referer>[^\"]*)"\s"(?<agent>[^\"]*)"\s(?:(|)(?<response_time>[^\s]*)))?$/
+       - /^(\"(?<location>(?<country>[\w]*)\s(?<region>[\w]*)\s(?<city>[\w]*)\s(?<lat>[\S]*)\s(?<long>[\S]*))\"\s)?(?<host>[^\s]*(?:\s+[^\s]+)*)\s[\-](?<user>[\w\s]*)[\-]\s\[(?<time>[^\]]*)\]\s"(?<method>\S+)\s(?<path1>\/[a-z,A-Z,\/]*)(?<id>\d+)(?<path2>[a-z,A-Z,\/]*)\s(?<header>[^\s]*)\"\s(?<code>[^\s]*)\s(?<size>[^\s]*)\s(?:"(?<referer>[^\"]*)"\s"(?<agent>[^\"]*)"\s(?:(|)(?<response_time>[^\s]*)))?$/
+       - /^(\"(?<location>(?<country>[\w]*)\s(?<region>[\w]*)\s(?<city>[\w]*)\s(?<lat>[\S]*)\s(?<long>[\S]*))\"\s)?(?<host>[^\s]*(?:\s+[^\s]+)*)\s[\-](?<user>[\w\s]*)[\-]\s\[(?<time>[^\]]*)\]\s"(?<method>\S+)\s(?<path>[^"]*\?)([^\s]*)\s(?<header>[^\s]*)\"\s(?<code>[^\s]*)\s(?<size>[^\s]*)\s(?:"(?<referer>[^\"]*)"\s"(?<agent>[^\"]*)"\s(?:(|)(?<response_time>[^\s]*)))?$/
+       - /^(\"(?<location>(?<country>[\w]*)\s(?<region>[\w]*)\s(?<city>[\w]*)\s(?<lat>[\S]*)\s(?<long>[\S]*))\"\s)?(?<host>[^\s]*(?:\s+[^\s]+)*)\s[\-](?<user>[\w\s]*)[\-]\s\[(?<time>[^\]]*)\]\s"(?<method>\S+)\s(?<path>[^"]*)\s(?<header>[^\s]*)\"\s(?<code>[^\s]*)\s(?<size>[^\s]*)\s(?:"(?<referer>[^\"]*)"\s"(?<agent>[^\"]*)"\s(?:(|)(?<response_time>[^\s]*)))?$/
      types: 'response_time:integer, size:float'
    transform:
      node: '#{Socket.gethostname}'
@@ -137,9 +141,8 @@ apache-access:
      _documentType: 'apacheAccessLogs'
      time: ${require 'time'; time.to_time.to_i}
      level: 'info'
-     message: "${record['method'] + ' ' + record['path'] + ' ' + record['code']}"
-   geotag:
-     geoip_lookup_keys: host
+#     message: "${record['method'] + ' ' + record['path'] + ' ' + record['code']}"
+     path: ${if record['path'] != nil then record['path'] elsif record['id2'] == nil then record['path1'] + '[id]' + record['path2'] else record['path1'] + '[id]' + record['path2'] + '[id]' + record['path3'] end}
    match:
      flush_interval: 30s
 
