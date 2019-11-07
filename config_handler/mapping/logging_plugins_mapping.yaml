@@ -108,7 +108,7 @@ apache-error:
 #       time: '#{Time.now.to_f}'
      file: '${tag_suffix[1]}'
      _plugin: 'apache'
-     _documentType: 'apacheErrorLogs'
+     _documentType: 'apacheError'
      time: ${require 'time'; time.to_time.to_i}
      component: ${record['level'].split(':').first()}
 #     level: ${record['level'].split(':').last()}
@@ -138,7 +138,7 @@ apache-access:
 #       time: '#{Time.now.to_f}'
      file: '${tag_suffix[1]}'
      _plugin: 'apache'
-     _documentType: 'apacheAccessLogs'
+     _documentType: 'apacheAccess'
      time: ${require 'time'; time.to_time.to_i}
      level: 'info'
      path: ${if record['path'] != nil then record['path'] elsif record['id2'] == nil then record['path1'] + '[id]' + record['path2'] else record['path1'] + '[id]' + record['path2'] + '[id]' + record['path3'] end}
