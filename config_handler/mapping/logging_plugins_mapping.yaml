@@ -144,6 +144,7 @@ apache-access:
      path: ${if record['path'] != nil then record['path'] elsif record['id2'] == nil then record['path1'] + '[id]' + record['path2'] else record['path1'] + '[id]' + record['path2'] + '[id]' + record['path3'] end}
    geotag:
      geoip_lookup_keys: host
+     geoip2_database: /usr/share/GeoLite2-City/GeoLite2-City.mmdb
    match:
      flush_interval: 30s
 
@@ -242,6 +243,7 @@ nginx-access:
     path: ${if record['path'] != nil then record['path'] elsif record['id2'] == nil then record['path1'] + '[id]' + record['path2'] else record['path1'] + '[id]' + record['path2'] + '[id]' + record['path3'] end}
   geotag:
     geoip_lookup_keys: host
+    geoip2_database: /usr/share/GeoLite2-City/GeoLite2-City.mmdb
   match:
     flush_interval: 30s
 
