@@ -145,6 +145,7 @@ apache-access:
      browser: ${if record['browserField1'] == nil then record['agent'] elsif record['browserField3'] != nil then record['browserField3'] elsif record['browserField1'] == 'Chrome' then record['browserField1'] else record['browserField2'] end}
    geotag:
      geoip_lookup_keys: host
+     geoip2_database: /usr/share/GeoLite2-City/GeoLite2-City.mmdb
    match:
      flush_interval: 30s
 
@@ -229,7 +230,7 @@ nginx-access:
     time_format: '%d/%b/%Y:%H:%M:%S %z'
     expressions:
      - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path1>\/[a-z,A-Z,\/]*)(?<id1>\d+)(?<path2>[a-z,A-Z,\/]+)(?<id2>\d+)(?<path3>[a-z,A-Z,\/]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
-     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path1>\/[a-z,A-Z,\/]*)(?<id>\d+)(?<path2>[a-z,A-Z,\/]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
+     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path1>\/[a-z,A-Z,^\/]*)\/(?<id>\d+)(?<path2>[a-z,A-Z,\/]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
      - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path>[^"]*\?)([^\s]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
      - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path>[^"]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
     'types': request_time:float,upstream_connect_time:float,upstream_header_time:float,upstream_response_time:float,size:integer
@@ -243,6 +244,7 @@ nginx-access:
     path: ${if record['path'] != nil then record['path'] elsif record['id2'] == nil then record['path1'] + '[id]' + record['path2'] else record['path1'] + '[id]' + record['path2'] + '[id]' + record['path3'] end}
   geotag:
     geoip_lookup_keys: host
+    geoip2_database: /usr/share/GeoLite2-City/GeoLite2-City.mmdb
   match:
     flush_interval: 30s
 
