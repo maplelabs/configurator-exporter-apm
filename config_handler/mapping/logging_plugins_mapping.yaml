@@ -108,7 +108,7 @@ apache-error:
 #       time: '#{Time.now.to_f}'
      file: '${tag_suffix[1]}'
      _plugin: 'apache'
-     _documentType: 'apacheErrorLogs'
+     _documentType: 'apacheError'
      time: ${require 'time'; time.to_time.to_i}
      component: ${record['level'].split(':').first()}
 #     level: ${record['level'].split(':').last()}
@@ -128,20 +128,21 @@ apache-access:
      '@type': multi_format
      time_format: '%d/%b/%Y:%H:%M:%S %z'
      expressions:
-       - /^(?<host>[^\s]*(?:\s+[^\s]+)*)\s[\-](?<user>[\w\s]*)[\-]\s\[(?<time>[^\]]*)\]\s"(?<method>\S+)\s(?<path1>\/[a-z,A-Z,\/]*)(?<id1>\d+)(?<path2>[a-z,A-Z,\/]+)(?<id2>\d+)(?<path3>[a-z,A-Z,\/]*)\s(?<header>[^\s]*)\"\s(?<code>[^\s]*)\s(?<size>[^\s]*)\s(?:"(?<referer>[^\"]*)"\s"(?<agent>[^\"]*)"\s(?:(|)(?<response_time>[^\s]*)))?$/
-       - /^(?<host>[^\s]*(?:\s+[^\s]+)*)\s[\-](?<user>[\w\s]*)[\-]\s\[(?<time>[^\]]*)\]\s"(?<method>\S+)\s(?<path1>\/[a-z,A-Z,\/]*)(?<id>\d+)(?<path2>[a-z,A-Z,\/]*)\s(?<header>[^\s]*)\"\s(?<code>[^\s]*)\s(?<size>[^\s]*)\s(?:"(?<referer>[^\"]*)"\s"(?<agent>[^\"]*)"\s(?:(|)(?<response_time>[^\s]*)))?$/
-       - /^(?<host>[^\s]*(?:\s+[^\s]+)*)\s[\-](?<user>[\w\s]*)[\-]\s\[(?<time>[^\]]*)\]\s"(?<method>\S+)\s(?<path>[^"]*)\?([^\s]*)\s(?<header>[^\s]*)\"\s(?<code>[^\s]*)\s(?<size>[^\s]*)\s(?:"(?<referer>[^\"]*)"\s"(?<agent>[^\"]*)"\s(?:(|)(?<response_time>[^\s]*)))?$/
-       - /^(?<host>[^\s]*(?:\s+[^\s]+)*)\s[\-](?<user>[\w\s]*)[\-]\s\[(?<time>[^\]]*)\]\s"(?<method>\S+)\s(?<path>[^"]*)\s(?<header>[^\s]*)\"\s(?<code>[^\s]*)\s(?<size>[^\s]*)\s(?:"(?<referer>[^\"]*)"\s"(?<agent>[^\"]*)"\s(?:(|)(?<response_time>[^\s]*)))?$/
+       - /^(?<host>[^\s]*(?:\s+[^\s]+)*)\s[\-](?<user>[\w\s]*)[\-]\s\[(?<time>[^\]]*)\]\s"(?<method>\S+)\s(?<path1>\/[a-z,A-Z,\/]*)(?<id1>\d+)(?<path2>[a-z,A-Z,\/]+)(?<id2>\d+)(?<path3>[a-z,A-Z,\/]*)\s(?<header>[^\s]*)\"\s(?<code>[^\s]*)\s(?<size>[^\s]*)\s(?:"(?<referer>[^\"]*)"\s"(?<agent>(\S*\s\((?<BrowserOS>[^\s;]*).*\)\s(?<browserField1>\w*)\/[\d.]*\s(?:(?<mobile>Mobile)[\/\S.]*\s)?(?<browserField2>[\w\s]*)\/[\d.]*\s?(?:(?<browserField3>\w*)\/[\d.]*)?)|(.*))"\s(?:(|)(?<response_time>[^\s]*)))?$/
+       - /^(?<host>[^\s]*(?:\s+[^\s]+)*)\s[\-](?<user>[\w\s]*)[\-]\s\[(?<time>[^\]]*)\]\s"(?<method>\S+)\s(?<path1>\/[a-z,A-Z,^\/]*)\/(?<id>\d+)(?<path2>[a-z,A-Z,\/]*)\s(?<header>[^\s]*)\"\s(?<code>[^\s]*)\s(?<size>[^\s]*)\s(?:"(?<referer>[^\"]*)"\s"(?<agent>(\S*\s\((?<BrowserOS>[^\s;]*).*\)\s(?<browserField1>\w*)\/[\d.]*\s(?:(?<mobile>Mobile)[\/\S.]*\s)?(?<browserField2>[\w\s]*)\/[\d.]*\s?(?:(?<browserField3>\w*)\/[\d.]*)?)|(.*))"\s(?:(|)(?<response_time>[^\s]*)))?$/
+       - /^(?<host>[^\s]*(?:\s+[^\s]+)*)\s[\-](?<user>[\w\s]*)[\-]\s\[(?<time>[^\]]*)\]\s"(?<method>\S+)\s(?<path>[^"]*)\?([^\s]*)\s(?<header>[^\s]*)\"\s(?<code>[^\s]*)\s(?<size>[^\s]*)\s(?:"(?<referer>[^\"]*)"\s"(?<agent>(\S*\s\((?<BrowserOS>[^\s;]*).*\)\s(?<browserField1>\w*)\/[\d.]*\s(?:(?<mobile>Mobile)[\/\S.]*\s)?(?<browserField2>[\w\s]*)\/[\d.]*\s?(?:(?<browserField3>\w*)\/[\d.]*)?)|(.*))"\s(?:(|)(?<response_time>[^\s]*)))?$/
+       - /^(?<host>[^\s]*(?:\s+[^\s]+)*)\s[\-](?<user>[\w\s]*)[\-]\s\[(?<time>[^\]]*)\]\s"(?<method>\S+)\s(?<path>[^"]*)\s(?<header>[^\s]*)\"\s(?<code>[^\s]*)\s(?<size>[^\s]*)\s(?:"(?<referer>[^\"]*)"\s"(?<agent>(\S*\s\((?<BrowserOS>[^\s;]*).*\)\s(?<browserField1>\w*)\/[\d.]*\s(?:(?<mobile>Mobile)[\/\S.]*\s)?(?<browserField2>[\w\s]*)\/[\d.]*\s?(?:(?<browserField3>\w*)\/[\d.]*)?)|(.*))"\s(?:(|)(?<response_time>[^\s]*)))?$/
      types: 'response_time:integer, size:float'
    transform:
      node: '#{Socket.gethostname}'
 #       time: '#{Time.now.to_f}'
      file: '${tag_suffix[1]}'
      _plugin: 'apache'
-     _documentType: 'apacheAccessLogs'
+     _documentType: 'apacheAccess'
      time: ${require 'time'; time.to_time.to_i}
      level: 'info'
      path: ${if record['path'] != nil then record['path'] elsif record['id2'] == nil then record['path1'] + '[id]' + record['path2'] else record['path1'] + '[id]' + record['path2'] + '[id]' + record['path3'] end}
+     browser: ${if record['browserField1'] == nil then record['agent'] elsif record['browserField3'] != nil then record['browserField3'] elsif record['browserField1'] == 'Chrome' then record['browserField1'] else record['browserField2'] end}
    geotag:
      geoip_lookup_keys: host
      geoip2_database: /usr/share/GeoLite2-City/GeoLite2-City.mmdb
@@ -228,10 +229,10 @@ nginx-access:
     '@type': multi_format
     time_format: '%d/%b/%Y:%H:%M:%S %z'
     expressions:
-     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path1>\/[a-z,A-Z,\/]*)(?<id1>\d+)(?<path2>[a-z,A-Z,\/]+)(?<id2>\d+)(?<path3>[a-z,A-Z,\/]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
-     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path1>\/[a-z,A-Z,^\/]*)\/(?<id>\d+)(?<path2>[a-z,A-Z,\/]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
-     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path>[^"]*)\?([^\s]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
-     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path>[^"]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>[^"]*)\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
+     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path1>\/[a-z,A-Z,\/]*)(?<id1>\d+)(?<path2>[a-z,A-Z,\/]+)(?<id2>\d+)(?<path3>[a-z,A-Z,\/]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>(\S*\s\((?<BrowserOS>[^\s;]*).*\)\s(?<browserField1>\w*)\/[\d.]*\s(?:(?<mobile>Mobile)[\/\S.]*\s)?(?<browserField2>[\w\s]*)\/[\d.]*\s?(?:(?<browserField3>\w*)\/[\d.]*)?)|(.*))\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
+     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path1>\/[a-z,A-Z,^\/]*)\/(?<id>\d+)(?<path2>[a-z,A-Z,\/]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>(\S*\s\((?<BrowserOS>[^\s;]*).*\)\s(?<browserField1>\w*)\/[\d.]*\s(?:(?<mobile>Mobile)[\/\S.]*\s)?(?<browserField2>[\w\s]*)\/[\d.]*\s?(?:(?<browserField3>\w*)\/[\d.]*)?)|(.*))\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
+     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path>[^"]*)\?([^\s]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>(\S*\s\((?<BrowserOS>[^\s;]*).*\)\s(?<browserField1>\w*)\/[\d.]*\s(?:(?<mobile>Mobile)[\/\S.]*\s)?(?<browserField2>[\w\s]*)\/[\d.]*\s?(?:(?<browserField3>\w*)\/[\d.]*)?)|(.*))\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
+     - '/^(?<host>[^ ]*)\s(?<user>[^ ]*)\s\[(?<time>[^\]]*)\]\s\"(?<method>[^ ]*)\s(?<path>[^"]*)\s(?<header>[^ ]*)\"\s(?<code>[^ ]*)\s(?<size>[^ ]*)\s\"(?<referer>[^"]*)\"\s\"(?<agent>(\S*\s\((?<BrowserOS>[^\s;]*).*\)\s(?<browserField1>\w*)\/[\d.]*\s(?:(?<mobile>Mobile)[\/\S.]*\s)?(?<browserField2>[\w\s]*)\/[\d.]*\s?(?:(?<browserField3>\w*)\/[\d.]*)?)|(.*))\"\s\"(?<referer2>[^"]*)\"\s(rt=(?<request_time>[^ ]*))\s(uct=(?<upstream_connect_time>[^ ]*))\s(uht=(?<upstream_header_time>[^ ]*))\s(urt=(?<upstream_response_time>[^ ]*))$/'
     'types': request_time:float,upstream_connect_time:float,upstream_header_time:float,upstream_response_time:float,size:integer
   transform:
     node: '#{Socket.gethostname}' 
@@ -241,6 +242,7 @@ nginx-access:
     time: ${require 'time'; time.to_time.to_i}
     level: 'info'
     path: ${if record['path'] != nil then record['path'] elsif record['id2'] == nil then record['path1'] + '[id]' + record['path2'] else record['path1'] + '[id]' + record['path2'] + '[id]' + record['path3'] end}
+    browser: ${if record['browserField1'] == nil then record['agent'] elsif record['browserField3'] != nil then record['browserField3'] elsif record['browserField1'] == 'Chrome' then record['browserField1'] else record['browserField2'] end}
   geotag:
     geoip_lookup_keys: host
     geoip2_database: /usr/share/GeoLite2-City/GeoLite2-City.mmdb
