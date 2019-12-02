@@ -37,7 +37,7 @@ PASSWORD = "password"
 LOCATION = "location"
 NODETYPE = "nodeType"
 SECURE = "secure"
-
+DOCUMENTSTYPES = "documentsTypes"
 SALT = "salt"
 COLLECTD = "collectd"
 COLLECTOR = "collector_type"
