@@ -143,13 +143,10 @@ class CollectdManager:
                             cfg[STATUS] = "FAILED: Config generation failed"
 
             # generate config for targets
-            self.logger.info("#### Targets: " + str(self.targets))
             for target, conf in self.targets.items():
                 filename = get_dest_filename(target)
-                self.logger.info("#### Target Conf: " + str(conf))
                 if 'password' in conf['elasticsearch']['config'] and conf['elasticsearch']['config']['password']:
                     conf['elasticsearch']['config']['password'] = base64.b64decode(conf['elasticsearch']['config']['password'])
-                    self.logger.info("### Decoded PWD: " + str(conf['elasticsearch']['config']['password']))
                 (success, section_cfg) = self.get_section_cfg(target, section=conf)
                 self.logger.debug("success: " + str(success) +
                                   " section_cfg: " + section_cfg)

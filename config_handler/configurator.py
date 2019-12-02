@@ -315,7 +315,6 @@ def get_target_status():
 def get_elasticsearch_status(host, index, port, protocol='http', username='', password=''):
     logger.info("Collecting elasticsearch status for the host %s for index %s" % (host, index))
     connections = "{}://{}:{}".format(protocol, str(host), str(port))
-    logger.info("##### Password: %s" % password)
     if password:
         password = base64.b64decode(password)
     elastic_search = Elasticsearch([connections], verify_certs=False, connection_class=RequestsHttpConnection, http_auth=(username, password))
