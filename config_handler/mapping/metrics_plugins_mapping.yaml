@@ -656,6 +656,22 @@ elasticsearchagent:
      label: ES Protocol
      fieldName: es_protocol
    - Mandatory: true
+     dataType: String
+     defaultValue: 'elastic'
+     fieldName: es_username
+     label: ES Username
+     max: ''
+     min: ''
+     tooltip: ES Username used to connect to elasticsearch
+   - Mandatory: true
+     dataType: password
+     defaultValue: 'elastic'
+     fieldName: es_password
+     label: ES Password
+     max: ''
+     min: ''
+     tooltip: ES Password used to connect to elasticsearch
+   - Mandatory: true
      fieldName: documentsTypes
      tooltip: document Types to be collected
      label: DocumentsTypes
