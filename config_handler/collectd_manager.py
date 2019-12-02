@@ -8,7 +8,7 @@
 import copy
 import socket
 from mako.template import Template
-
+import base64
 from config_util import *
 
 
@@ -143,8 +143,13 @@ class CollectdManager:
                             cfg[STATUS] = "FAILED: Config generation failed"
 
             # generate config for targets
+            self.logger.info("#### Targets: " + str(self.targets))
             for target, conf in self.targets.items():
                 filename = get_dest_filename(target)
+                self.logger.info("#### Target Conf: " + str(conf))
+                if 'password' in conf['elasticsearch']['config'] and conf['elasticsearch']['config']['password']:
+                    conf['elasticsearch']['config']['password'] = base64.b64decode(conf['elasticsearch']['config']['password'])
+                    self.logger.info("### Decoded PWD: " + str(conf['elasticsearch']['config']['password']))
                 (success, section_cfg) = self.get_section_cfg(target, section=conf)
                 self.logger.debug("success: " + str(success) +
                                   " section_cfg: " + section_cfg)
@@ -350,6 +355,9 @@ class CollectdManager:
                     #     pass
 
             metrics[TARGETS] = target_list
+            for target in metrics[TARGETS]:
+                if "password" in target and target['password']:
+                    target["password"] = base64.b64encode(target["password"])
             metrics[ENABLED] = self.collector_dict.get(ENABLED, True)
             metrics[TAGS] = self.collector_dict.get(TAGS, {})
             # Store config data

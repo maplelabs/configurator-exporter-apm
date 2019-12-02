@@ -10,7 +10,8 @@ from threading import Timer
 from config_handler import collectd_manager
 from config_handler import fluentd_manager
 from config_util import *
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, RequestsHttpConnection
+import base64
 
 CONFIG_WRITE_INTERVAL = 300
 timer = None
@@ -264,7 +265,17 @@ def get_target_status():
             for target in collectd_exsting_data['targets']:
                 target_details["name"] = target["name"]
                 target_details["index"] = target["index"]
-                target_details["status"] = get_elasticsearch_status(target["host"], target["index"], target["port"])
+                es_username = ''
+                es_password = ''
+                if "password" in target and target["password"]:
+                    es_password = target["password"]
+                if "username" in target and target["username"]:
+                    es_username = target["username"]
+                if "protocol" in target and target["protocol"]:
+                    es_protocol = target["protocol"]
+                else:
+                    es_protocol = 'http'
+                target_details["status"] = get_elasticsearch_status(target["host"], target["index"], target["port"], es_protocol, es_username, es_password)
                 target_details["type"] = "collectd"
                 target_status.append(target_details)
         else:
@@ -277,7 +288,17 @@ def get_target_status():
                 target_details = {}
                 target_details["name"] = target["name"]
                 target_details["index"] = target["index"]
-                target_details["status"] = get_elasticsearch_status(target["host"], target["index"], target["port"])
+                es_username = ''
+                es_password = ''
+                if "password" in target and target["password"]:
+                    es_password = target["password"]
+                if "username" in target and target["username"]:
+                    es_username = target["username"]
+                if "protocol" in target and target["protocol"]:
+                    es_protocol = target["protocol"]
+                else:
+                    es_protocol = 'http'
+                target_details["status"] = get_elasticsearch_status(target["host"], target["index"], target["port"], es_protocol, es_username, es_password)
                 target_details["type"] = "fluentd"
                 if 'store_type' in target and target['store_type'] == 'metric':
                     target_details["store_type"] = "metric"
@@ -291,10 +312,13 @@ def get_target_status():
         logger.error("Exception in getting target status due to %s" % str(e))
     return target_status
 
-def get_elasticsearch_status(host, index, port):
+def get_elasticsearch_status(host, index, port, protocol='http', username='', password=''):
     logger.info("Collecting elasticsearch status for the host %s for index %s" % (host, index))
-    connections = [{'host': str(host), 'port': str(port)}]
-    elastic_search = Elasticsearch(connections)
+    connections = "{}://{}:{}".format(protocol, str(host), str(port))
+    logger.info("##### Password: %s" % password)
+    if password:
+        password = base64.b64decode(password)
+    elastic_search = Elasticsearch([connections], verify_certs=False, connection_class=RequestsHttpConnection, http_auth=(username, password))
     try:
         index_alias = elastic_search.indices.get_alias(index + "_write")
     except Exception as err:
