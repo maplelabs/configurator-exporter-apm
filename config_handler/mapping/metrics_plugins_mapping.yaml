@@ -740,6 +740,7 @@ elasticsearchagent:
      min: ''
      max: ''
 
+#mapping
 # mapping for prometheus linux
 prometheuslinux:
  - name: prometheuslinux
@@ -871,6 +872,50 @@ prometheusjmeter:
      tooltip: Polling Interval
      label: Interval
      fieldName: interval
+
+
+nodejs:
+  - interval: 300
+    name: nodejs
+    config:
+    - Mandatory: true
+      dataType: Integer
+      defaultValue: 8080
+      fieldName: port
+      label: Port
+      max: ''
+      min: ''
+      tooltip: port in which nodejs is exposed on localhost
+    - Mandatory: true
+      dataType: Integer
+      defaultValue: 300
+      fieldName: interval
+      label: Interval
+      max: ''
+      min: ''
+      tooltip: Polling Interval
+
+nodejsapi:
+  - interval: 300
+    name: nodejsapi
+    config:
+    - Mandatory: true
+      dataType: Integer
+      defaultValue: 8080
+      fieldName: port
+      label: Port
+      max: ''
+      min: ''
+      tooltip: port in which nodejs is exposed on localhost
+    - Mandatory: true
+      dataType: Integer
+      defaultValue: 300
+      fieldName: interval
+      label: Interval
+      max: ''
+      min: ''
+      tooltip: Polling Interval
+
 
 #mapping for esa plugin
 #esalogstore:

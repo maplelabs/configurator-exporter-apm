@@ -75,7 +75,9 @@ SERVICE_NAME = {
     "apache-exporter": "apache",
     "elasticsearch-exporter": "elasticsearch",
     "nginx-exporter": "nginx",
-    "jmeter-exporter": "jmeter"
+    "jmeter-exporter": "jmeter",
+    "nodejs" : "node",
+    "nodejsapi": "node"
 }
 SERVICES = [
     "elasticsearch",
@@ -95,7 +97,8 @@ SERVICES = [
     "cassandra",
     "esalogstore",
     "jvm",
-    "jmeter"
+    "jmeter",
+    "node"
 ]
 '''
 Mapping for services and the plugin to be configured for them.
@@ -132,7 +135,9 @@ SERVICE_PLUGIN_MAPPING = {
     "jmx-exporter": "prometheusjmx",
     "apache-exporter": "prometheusapache",
     "nginx-exporter": "prometheusnginx",
-    "jmeter-exporter": "prometheusjmeter"
+    "jmeter-exporter": "prometheusjmeter",
+    "nodejs": "nodejs",
+    "nodejsapi": "nodejsapi"
 }
 POLLER_PLUGIN = ["elasticsearch"]
 JMX_PLUGINS = ["kafka.Kafka", "zookeeper"]
@@ -231,7 +236,7 @@ def discover_log_path():
                             log_name = esconf["cluster.name"]
                         else:
                             log_name = "elasticsearch"
-                    break 
+                    break
 
     except:
         return
@@ -534,7 +539,7 @@ def discover_prometheus_services(discovery):
             if SERVICE_NAME[service] not in discovery:
                 discovery[SERVICE_NAME[service]] = []
             discovery[SERVICE_NAME[service]].append(final_dict)
-	
+
 	for service in JVM_ENABLED_PLUGINS:
             if SERVICE_NAME[service] in discovery and SERVICE_NAME['jmx-exporter'] in discovery:
                 discovery.pop('JMX')
@@ -582,6 +587,11 @@ def discover_services():
             service_list.remove('jvm')
             break
 
+    if "node" in service_list:
+        service_list.add("nodejs")
+        service_list.add("nodejsapi")
+        service_list.discard("node")
+        
     if "kafka.Kafka" in service_list:
         service_list.add("kafkajmx")
 
