@@ -888,7 +888,7 @@ nodejs:
       tooltip: port in which nodejs is exposed on localhost
     - Mandatory: true
       dataType: Integer
-      defaultValue: 300
+      defaultValue: 60
       fieldName: interval
       label: Interval
       max: ''
