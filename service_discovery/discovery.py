@@ -588,7 +588,7 @@ def discover_services():
         service_list.add("nodejs")
         service_list.add("nodejsapi")
         service_list.discard("node")
-        
+
     if "kafka.Kafka" in service_list:
         service_list.add("kafkajmx")
 
