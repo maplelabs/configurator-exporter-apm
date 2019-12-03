@@ -435,6 +435,7 @@ class FluentdPluginManager:
                             if key == "enable":
                                 continue
                             lines.append('\t' + key + ' ' + val)
+                        lines.append('\t' + 'ssl_verify ' + 'false')
                         lines.append('\t' + 'type_name' + ' ' + DOCUMENT)
                         for key, val in data.get('match', {}).iteritems():
                             lines.append('\t' + str(key) + ' ' + str(val))
@@ -460,7 +461,8 @@ class FluentdPluginManager:
                             if key == "enable":
                                 continue
                             lines.append('\t' + key + ' ' + val)
-			lines.append('\t' + 'type_name' + ' ' + DOCUMENT)
+                        lines.append('\t' + 'ssl_verify ' + 'false')
+                        lines.append('\t' + 'type_name' + ' ' + DOCUMENT)
 
                         for key, val in data.get('match', {}).iteritems():
                             lines.append('\t' + str(key) + ' ' + str(val))
@@ -534,6 +536,7 @@ class FluentdPluginManager:
                         continue
                     lines.append('\t' + key + ' ' + val)
 
+                lines.append('\t' + 'ssl_verify ' + 'false')
                 lines.append('\t' + 'flush_interval' + ' ' +
                              str(self.plugin_config.get('default_flush_interval', '60s')))
                 lines.append('\t' + 'include_tag_key' + ' true')
