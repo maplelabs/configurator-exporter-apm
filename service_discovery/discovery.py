@@ -74,7 +74,9 @@ SERVICE_NAME = {
     "apache-exporter": "apache",
     "elasticsearch-exporter": "elasticsearch",
     "nginx-exporter": "nginx",
-    "jmeter-exporter": "jmeter"
+    "jmeter-exporter": "jmeter",
+    "nodejs" : "node",
+    "nodejsapi": "node"
 }
 SERVICES = [
     "elasticsearch",
@@ -93,7 +95,8 @@ SERVICES = [
     "cassandra",
     "esalogstore",
     "jvm",
-    "jmeter"
+    "jmeter",
+    "node"
 ]
 '''
 Mapping for services and the plugin to be configured for them.
@@ -129,42 +132,44 @@ SERVICE_PLUGIN_MAPPING = {
     "jmx-exporter": "prometheusjmx",
     "apache-exporter": "prometheusapache",
     "nginx-exporter": "prometheusnginx",
-    "jmeter-exporter": "prometheusjmeter"
+    "jmeter-exporter": "prometheusjmeter",
+    "nodejs": "nodejs",
+    "nodejsapi": "nodejsapi"
 }
 POLLER_PLUGIN = ["elasticsearch"]
 JMX_PLUGINS = ["kafka.Kafka", "zookeeper"]
 JVM_ENABLED_PLUGINS = ["kafka.Kafka", "zookeeper", "elasticsearch", "tomcat"]
 HADOOP_SERVICE = {
     "yarn-rm-log": { \
-         "service-name": "org.apache.hadoop.yarn.server.resourcemanager.ResourceManager",
-         "service-list": ["yarn-rm", "yarn-audit"],
-         "plugin_name": "yarn"
-                   },
+        "service-name": "org.apache.hadoop.yarn.server.resourcemanager.ResourceManager",
+        "service-list": ["yarn-rm", "yarn-audit"],
+        "plugin_name": "yarn"
+    },
     "yarn-timeline-server": { \
-         "service-name": "org.apache.hadoop.yarn.server.applicationhistoryservice.ApplicationHistoryServer",
-         "service-list": ["yarn-timeline"],
-         "plugin_name": "yarn"
-                            },
+        "service-name": "org.apache.hadoop.yarn.server.applicationhistoryservice.ApplicationHistoryServer",
+        "service-list": ["yarn-timeline"],
+        "plugin_name": "yarn"
+    },
     "hdfs-namenode": { \
-         "service-name": "org.apache.hadoop.hdfs.server.namenode.NameNode",
-         "service-list": ["hdfs-namenode", "hdfs-audit", "hdfs-gc", "hdfs-zkfc-manager"],
-         "plugin_name": "hdfs"
-                     },
+        "service-name": "org.apache.hadoop.hdfs.server.namenode.NameNode",
+        "service-list": ["hdfs-namenode", "hdfs-audit", "hdfs-gc", "hdfs-zkfc-manager"],
+        "plugin_name": "hdfs"
+    },
     "hdfs-journalnode": { \
-         "service-name": "org.apache.hadoop.hdfs.qjournal.server.JournalNode",
-         "service-list": ["hdfs-journalnode", "hdfs-gc", "hdfs-journalnode-manager"],
-         "plugin_name": "hdfs"
-                        },
+        "service-name": "org.apache.hadoop.hdfs.qjournal.server.JournalNode",
+        "service-list": ["hdfs-journalnode", "hdfs-gc", "hdfs-journalnode-manager"],
+        "plugin_name": "hdfs"
+    },
     "oozie-server": { \
-         "service-name": "oozie-server",
-         "service-list": ["oozie-ops", "oozie-audit", "oozie-error-logs", "oozie-logs", "oozie-instrumentation", "oozie-jpa"],
-         "plugin_name": "oozie"
-                    },
+        "service-name": "oozie-server",
+        "service-list": ["oozie-ops", "oozie-audit", "oozie-error-logs", "oozie-logs", "oozie-instrumentation", "oozie-jpa"],
+        "plugin_name": "oozie"
+    },
     "hdfs-datanode": { \
-         "service-name": "org.apache.hadoop.hdfs.server.datanode.DataNode",
-         "service-list": ["hdfs-datanode"],
-         "plugin_name": "hdfs"
-                     }
+        "service-name": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+        "service-list": ["hdfs-datanode"],
+        "plugin_name": "hdfs"
+    }
 }
 
 '''
@@ -228,7 +233,7 @@ def discover_log_path():
                             log_name = esconf["cluster.name"]
                         else:
                             log_name = "elasticsearch"
-                    break 
+                    break
 
     except:
         return
@@ -258,7 +263,7 @@ def get_jcmd_result():
                 return process.split()[0]
         return ""
     except Exception as err:
-	logger.error("Error in getting jcmd command output")
+        logger.error("Error in getting jcmd command output")
 
 
 def get_process_id(service):
@@ -300,15 +305,15 @@ def get_process_id(service):
                 process_id = proc.info.get("pid")
                 break
 
-	if service == "jvm":
-	    process_id = get_jcmd_result()
+    if service == "jvm":
+        process_id = get_jcmd_result()
 
         ## add_pid_usage(process_id, pids)
         logger.info("PID %s", process_id)
         return process_id
     except BaseException:
-        logger.info("PID %s", process_id)
-        return process_id
+    logger.info("PID %s", process_id)
+    return process_id
 
 
 def get_hadoop_pid(service):
@@ -523,19 +528,19 @@ def discover_prometheus_services(discovery):
             final_dict["agentConfig"]["recommend"] = True
             final_dict["agentConfig"]["selected"] = False
 
-	    if service == 'jmeter-exporter':
-                discovery[SERVICE_NAME[service]][0]['loggerConfig'][0]['recommend'] = False
+        if service == 'jmeter-exporter':
+            discovery[SERVICE_NAME[service]][0]['loggerConfig'][0]['recommend'] = False
 
             # Initialize list for each service if its not already discovered.
             # This condition is for jmx-exporter and node-exporter
-            if SERVICE_NAME[service] not in discovery:
-                discovery[SERVICE_NAME[service]] = []
-            discovery[SERVICE_NAME[service]].append(final_dict)
-	
-	for service in JVM_ENABLED_PLUGINS:
-            if SERVICE_NAME[service] in discovery and SERVICE_NAME['jmx-exporter'] in discovery:
-                discovery.pop('JMX')
-                break
+        if SERVICE_NAME[service] not in discovery:
+            discovery[SERVICE_NAME[service]] = []
+        discovery[SERVICE_NAME[service]].append(final_dict)
+
+    for service in JVM_ENABLED_PLUGINS:
+        if SERVICE_NAME[service] in discovery and SERVICE_NAME['jmx-exporter'] in discovery:
+            discovery.pop('JMX')
+            break
 
     return discovery
 
@@ -579,6 +584,11 @@ def discover_services():
             service_list.remove('jvm')
             break
 
+    if "node" in service_list:
+        service_list.add("nodejs")
+        service_list.add("nodejsapi")
+        service_list.discard("node")
+
     if "kafka.Kafka" in service_list:
         service_list.add("kafkajmx")
 
@@ -594,7 +604,7 @@ def discover_services():
         logger_dict = add_logger_config(service_dict, service)
 
         #if service in POLLER_PLUGIN:
-         #   final_dict = add_poller_config(service, logger_dict)
+        #   final_dict = add_poller_config(service, logger_dict)
         if service in logger_list:
             # This condition is only for esalogger
             final_dict = logger_dict
@@ -603,9 +613,9 @@ def discover_services():
             final_dict["agentConfig"]["recommend"] = False
             final_dict["agentConfig"]["selected"] = False
 
-	if SERVICE_NAME[service] not in discovery:
-            discovery[SERVICE_NAME[service]] = []
-        discovery[SERVICE_NAME[service]].append(final_dict)
+    if SERVICE_NAME[service] not in discovery:
+        discovery[SERVICE_NAME[service]] = []
+    discovery[SERVICE_NAME[service]].append(final_dict)
 
     # Check if nginxplus process is running, if nginx has been discovered
     if 'nginx' in discovery and check_nginx_plus():
@@ -635,8 +645,8 @@ def discover_services():
                 plugin['agentConfig']['recommend'] = True
 
     #for service_name in discovery:
-        # If prometheus plugin is not discovered for a service, set recommend = True for the agent plugin
-        #if len(discovery[service_name]) == 1 and service_name not in recommend_off:
-            #discovery[service_name][0]['agentConfig']['recommend'] = True
+    # If prometheus plugin is not discovered for a service, set recommend = True for the agent plugin
+    #if len(discovery[service_name]) == 1 and service_name not in recommend_off:
+    #discovery[service_name][0]['agentConfig']['recommend'] = True
     logger.info("Discovered services: %s" %str(discovery))
     return discovery
