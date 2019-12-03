@@ -462,7 +462,7 @@ class FluentdPluginManager:
                                 continue
                             lines.append('\t' + key + ' ' + val)
                         lines.append('\t' + 'ssl_verify ' + 'false')
-			lines.append('\t' + 'type_name' + ' ' + DOCUMENT)
+                        lines.append('\t' + 'type_name' + ' ' + DOCUMENT)
 
                         for key, val in data.get('match', {}).iteritems():
                             lines.append('\t' + str(key) + ' ' + str(val))
