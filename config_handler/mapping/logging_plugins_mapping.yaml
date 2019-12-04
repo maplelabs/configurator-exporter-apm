@@ -122,7 +122,7 @@ apache-access:
 #     format: '/^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)" (?<response_time>[^ ]*))?$/'
 #     time_format: '%d/%b/%Y:%H:%M:%S %z'
 #     keep_time_key: 'true'
-     path: '/var/log/apache2/access.log, /var/log/httpd/access_log'
+     path: '/var/log/apache2/access.log, /var/log/httpd/access_log, /var/log/apache2/access_log, /var/log/httpd/access.log'
      pos_file: '/var/log/td-agent/apache_access.pos'
    parse:
      '@type': multi_format
@@ -251,7 +251,6 @@ nginx-access:
 
 #postgres logging mapping
 postgres-general:
-  collection_type: metric
   source:
     '@type': tail
     path: '/var/lib/pgsql/9.6/data/pg_log/postgresql-Sun.log, /var/lib/pgsql/9.6/data/pg_log/postgresql-Sat.log, /var/lib/pgsql/9.6/data/pg_log/postgresql-Fri.log, /var/lib/pgsql/9.6/data/pg_log/postgresql-Thu.log, /var/lib/pgsql/9.6/data/pg_log/postgresql-Wed.log,  /var/lib/pgsql/9.6/data/pg_log/postgresql-Tue.log, /var/lib/pgsql/9.6/data/pg_log/postgresql-Mon.log, /var/log/postgresql/postgresql-10-main.log'

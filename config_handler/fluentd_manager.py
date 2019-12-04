@@ -9,7 +9,7 @@ Logger Plugin manager
 """
 import copy
 from config_util import *
-
+import base64
 
 class FluentdPluginManager:
     """
@@ -426,9 +426,16 @@ class FluentdPluginManager:
                             if key == "index":
                                 key += "_name"
                                 val = val+"_write"
+                            if key == "username":
+                                key = "user"
+                            if key == "password":
+                                val = base64.b64decode(val)
+                            if key == "protocol":
+                                key = "scheme"
                             if key == "enable":
                                 continue
                             lines.append('\t' + key + ' ' + val)
+                        lines.append('\t' + 'ssl_verify ' + 'false')
                         lines.append('\t' + 'type_name' + ' ' + DOCUMENT)
                         for key, val in data.get('match', {}).iteritems():
                             lines.append('\t' + str(key) + ' ' + str(val))
@@ -445,10 +452,17 @@ class FluentdPluginManager:
                             if key == "index":
                                 key += "_name"
                                 val = val+"_write"
+                            if key == "username":
+                                key = "user"
+                            if key == "password":
+                                val = base64.b64decode(val)
+                            if key == "protocol":
+                                key = "scheme"
                             if key == "enable":
                                 continue
                             lines.append('\t' + key + ' ' + val)
-			lines.append('\t' + 'type_name' + ' ' + DOCUMENT)
+                        lines.append('\t' + 'ssl_verify ' + 'false')
+                        lines.append('\t' + 'type_name' + ' ' + DOCUMENT)
 
                         for key, val in data.get('match', {}).iteritems():
                             lines.append('\t' + str(key) + ' ' + str(val))
@@ -512,10 +526,17 @@ class FluentdPluginManager:
                     if key == "index":
                         key += "_name"
                         val = val+"_write"
+                    if key == "username":
+                        key = "user"
+                    if key == "password":
+                        val = base64.b64decode(val)
+                    if key == "protocol":
+                        key = "scheme"
                     if key == "enable":
                         continue
                     lines.append('\t' + key + ' ' + val)
 
+                lines.append('\t' + 'ssl_verify ' + 'false')
                 lines.append('\t' + 'flush_interval' + ' ' +
                              str(self.plugin_config.get('default_flush_interval', '60s')))
                 lines.append('\t' + 'include_tag_key' + ' true')
