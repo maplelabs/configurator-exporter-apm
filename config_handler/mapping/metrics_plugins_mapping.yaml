@@ -244,14 +244,14 @@ redisdb:
      label: Document Types
      dataType: list
      multiselect: true
-     defaultValue: ['redisDetails', 'redisStat', 'redisPersistance', 'keyspaceStat']
+     defaultValue: ['redisDetails', 'redisStat', 'redisPersistence', 'keyspaceStat']
      options:
       - label: 'redisDetails'
         value: 'redisDetails'
       - label: 'redisStat'
         value: 'redisStat'
-      - label: 'redisPersistance'
-        value: 'redisPersistance'
+      - label: 'redisPersistence'
+        value: 'redisPersistence'
       - label: 'keyspaceStat'
         value: 'keyspaceStat'
      min: ''
