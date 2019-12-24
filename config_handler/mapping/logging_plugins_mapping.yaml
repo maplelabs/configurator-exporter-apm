@@ -36,9 +36,9 @@ tomcat-logger:
   parse:
     '@type': multi_format
     expressions:
-    - '/^(?<host>((\d)*(\.)+(\d)*(\.)+(\d)*(\.)+(\d)*)) ([\-](?<user>[\w\ ]*)[\-]) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*).*$/'
+    - '/^(?<host>((\d)*(\.)+(\d)*(\.)+(\d)*(\.)+(\d)*)) ([\-](?<user>[\w\ ]*)[\-]) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*) (?<response_time>[^ ]*).*$/'
     time_format: '%d/%b/%Y:%H:%M:%S %z'
-    types: response_time:integer
+    types: response_time:integer, size:float
   source:
     '@type': tail
     path: /opt/tomcat/apache-tomcat-9.0.29/logs/localhost_access_log*.txt
