@@ -26,6 +26,31 @@ mysql-error:
   match:
     flush_interval: 30s
 
+tomcat-logger:
+  collection_type: metric
+  geotag:
+    geoip2_database: /usr/share/GeoLite2-City/GeoLite2-City.mmdb
+    geoip_lookup_keys: host
+  match:
+    flush_interval: 30s
+  parse:
+    '@type': multi_format
+    expressions:
+    - '/^(?<host>((\d)*(\.)+(\d)*(\.)+(\d)*(\.)+(\d)*)) ([\-](?<user>[\w\ ]*)[\-]) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*) (?<response_time>[^ ]*) (?<agent>(\S*\s\((?<BrowserOS>[^\s;]*).*\)\s(?<browserField1>\w*)\/[\d.]*\s(?:(?<mobile>Mobile)[\/\S.]*\s)?(?<browserField2>[\w\s]*)\/[\d.]*\s?(?:(?<browserField3>\w*)\/[\d.]*)?)|(.*)).*$/'
+    time_format: '%d/%b/%Y:%H:%M:%S %z'
+    types: response_time:integer, size:float
+  source:
+    '@type': tail
+    path: /opt/tomcat/apache-tomcat-9.0.29/logs/localhost_access_log*.txt
+    pos_file: /var/log/td-agent/tomcat.pos
+  transform:
+    _documentType: tomcatLogs
+    _plugin: tomcat-logger
+    file: ${tag_suffix[1]}
+    message: ${record['message']}
+    node: '#{Socket.gethostname}'
+    time: ${require 'time'; time.to_time.to_i}
+
 mysql-general:
   collection_type: metric
   source:
@@ -391,27 +416,6 @@ esalogstore:
   match:
     flush_interval: 30s
 
-# Tomcat logger mapping
-tomcat:
-    source:
-        '@type': tail
-        path: '/opt/apache-tomcat-9.0.12/logs/catalina.out'
-        pos_file: '/var/log/td-agent/tomcat.pos'
-    multiline:
-        format_firstline: '/^([^\:\ ]*)\s([^ ]*)\s([^\:\ ]*)\s\[([^\]]*)\]/'
-        expression:
-            - '/^(?<time>[^ ]*\s[^ ]*)\s(?<level>[^ ]*)\s\[(?<logging_class>[^ ]*)\]\s(?<class_name>[^ ]*)\s(?<message>.*)$/'
-    transform:
-        node: '#{Socket.gethostname}'
-        file: '${tag_suffix[1]}'
-        _plugin: 'tomcat'
-        _documentType: 'tomcatLogs'
-        time: ${require 'time'; time.to_time.to_i}
-        level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
-        message: ${record['message']}
-    match:
-        flush_interval: 30s
-        
         # yarn resource manager logging mapping
 yarn-rm:
   source:
