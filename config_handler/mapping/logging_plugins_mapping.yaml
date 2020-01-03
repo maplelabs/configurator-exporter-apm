@@ -18,7 +18,7 @@ mysql-error:
      - '/(?<time>[^ ]* [^ ]*)\s*(?<message>.*)$/'
   transform:
     node: '#{Socket.gethostname}'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     file: '${tag_suffix[1]}'
     _plugin: 'mysql'
     _documentType: 'mysqlErrorLogs'
@@ -49,7 +49,7 @@ tomcat-logger:
     file: ${tag_suffix[1]}
     message: ${record['message']}
     node: '#{Socket.gethostname}'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
 
 mysql-general:
   collection_type: metric
@@ -74,7 +74,7 @@ mysql-general:
      - '/\"(?<event_time>[^\]]*)\"\W+(?<user1>\S+)\W+(?<user2>\w+)\W+(?<host>\w+)\W+(?<pid1>\d+)\W+(?<pid2>\d+)\W+(?<command>.\w*)\W+(?<argument>.*)\"/'
   transform:
     node: '#{Socket.gethostname}'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     file: '${tag_suffix[1]}'
     _plugin: 'mysql'
     _documentType: 'mysqlAccessLogs'
@@ -97,7 +97,7 @@ mysql-slowquery:
     types: 'query_time:float, lock_time:float, rows_sent:integer, rows_examined:integer'
   transform:
     node: '#{Socket.gethostname}'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     file: '${tag_suffix[1]}'
     _plugin: 'mysql'
     _documentType: 'mysqlSlowQueryLogs'
@@ -134,7 +134,7 @@ apache-error:
      file: '${tag_suffix[1]}'
      _plugin: 'apache'
      _documentType: 'apacheError'
-     time: ${require 'time'; time.to_time.to_i}
+     time: ${require 'time'; time.to_time.to_i * 1000}
      component: ${record['level'].split(':').first()}
 #     level: ${record['level'].split(':').last()}
      level: ${n_level='warning'; if record['level'].split(':').last().downcase == 'warn' then n_level else record['level'].split(':').last().downcase end}
@@ -167,7 +167,7 @@ apache-access:
      file: '${tag_suffix[1]}'
      _plugin: 'apache'
      _documentType: 'apacheAccess'
-     time: ${require 'time'; time.to_time.to_i}
+     time: ${require 'time'; time.to_time.to_i * 1000}
      level: 'info'
      path: ${if record['path'] != nil then record['path'] elsif record['pattern4'] != nil then record['path1'] + '/[id]' + record['pattern4'] + record['path2'] elsif record['pattern3'] != nil then record['path1'] + '/[id]' + record['pattern3'] elsif record['pattern2'] != nil then record['path1'] + '/[id]/' + record['path2'] + '/[id]' + record['pattern2'] + record['path3'] else record['path1'] + '/[id]/' + record['path2'] + '/[id]' + record['pattern1'] end}
      browser: ${if record['browserField1'] == nil then record['agent'] elsif record['browserField3'] != nil then record['browserField3'] elsif record['browserField1'] == 'Chrome' then record['browserField1'] else record['browserField2'] end}
@@ -219,7 +219,7 @@ linux-syslog:
     ident: ${record['ident']}
     level: ${n_level='info'; if record.key?('level') == nil or record['level'] == nil then n_level else record['level'].strip() end}
     pid: ${record['pid']}
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
   match:
     flush_interval: 30s
 
@@ -242,7 +242,7 @@ nginx-error:
      _plugin: 'nginx'
      _documentType: 'nginxErrorLogs'
      level: ${n_level='error'; if record['level'] == 'emerg' then n_level else record['level'] end}
-     time: ${require 'time'; time.to_time.to_i}
+     time: ${require 'time'; time.to_time.to_i * 1000}
    match:
      flush_interval: 30s
 
@@ -271,7 +271,7 @@ nginx-access:
     file: '${tag_suffix[1]}' 
     _plugin: 'nginx'
     _documentType: 'nginxAccessLogs'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: 'info'
     path: ${if record['path'] != nil then record['path'] elsif record['pattern4'] != nil then record['path1'] + '/[id]' + record['pattern4'] + record['path2'] elsif record['pattern3'] != nil then record['path1'] + '/[id]' + record['pattern3'] elsif record['pattern2'] != nil then record['path1'] + '/[id]/' + record['path2'] + '/[id]' + record['pattern2'] + record['path3'] else record['path1'] + '/[id]/' + record['path2'] + '/[id]' + record['pattern1'] end}
     browser: ${if record['browserField1'] == nil then record['agent'] elsif record['browserField3'] != nil then record['browserField3'] elsif record['browserField1'] == 'Chrome' then record['browserField1'] else record['browserField2'] end}
@@ -295,7 +295,7 @@ postgres-general:
     file: '${tag_suffix[1]}'
     _plugin: 'postgres'
     _documentType: 'postgresLogs'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${record['level'].split(':').first().downcase}
   match:
     flush_interval: 30s
@@ -316,7 +316,7 @@ haproxy:
     file: '${tag_suffix[1]}'
     _plugin: 'haproxy'
     _documentType: 'haproxyLogs'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
   match:
     flush_interval: 30s
 
@@ -335,7 +335,7 @@ elasticsearch-general:
     file: '${tag_suffix[1]}'
     _plugin: 'elasticsearch'
     _documentType: 'ESLogs'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     logging_class: ${record['logging_class'].strip()}
    # level: ${record['level'].strip()}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
@@ -358,7 +358,7 @@ kafka:
     file: '${tag_suffix[1]}'
     _plugin: 'kafka'
     _documentType: 'kafkaLogs'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].downcase == 'warn' then n_level else record['level'].downcase end}
     process: ${record['process']}
     process_id: ${if record['process_id'] then record['process_id'].split('=')[1].split(' ')[0] else record['process_id'] end}
@@ -380,7 +380,7 @@ zookeeper:
     file: '${tag_suffix[1]}'
     _plugin: 'zookeeper'
     _documentType: 'zookeeperLogs'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].downcase == 'warn' then n_level else record['level'].downcase end}
     process: ${record['process']}
     process_id: ${if record['process_id'] then record['process_id'].split('=')[1].split(' ')[0] else record['process_id'] end}
@@ -408,7 +408,7 @@ esalogstore:
     file: '${tag_suffix[1]}'
     _plugin: 'esalogstore'
     _documentType: '${tag_suffix[6]}'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${record['level'].split(':').first().downcase}
     message: ${record['message']}
     _tag_uuid: "${tag_suffix[5].rpartition('_').last.split('.')[0]}"
@@ -431,7 +431,7 @@ yarn-rm:
     file: '${tag_suffix[1]}'
     _plugin: 'yarn'
     _documentType: 'resourceManagerLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -452,7 +452,7 @@ yarn-audit:
     file: '${tag_suffix[1]}'
     _plugin: 'yarn'
     _documentType: 'yarnAuditLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -473,7 +473,7 @@ yarn-timeline:
     file: '${tag_suffix[1]}'
     _plugin: 'yarn'
     _documentType: 'timeLineServerLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -495,7 +495,7 @@ hdfs-audit:
     file: '${tag_suffix[1]}'
     _plugin: 'hdfs'
     _documentType: 'hdfsAuditLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -516,7 +516,7 @@ hdfs-namenode:
     file: '${tag_suffix[1]}'
     _plugin: 'hdfs'
     _documentType: 'nameNodeLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -537,7 +537,7 @@ oozie-audit:
     file: '${tag_suffix[1]}'
     _plugin: 'oozie'
     _documentType: 'oozieAuditLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -557,7 +557,7 @@ oozie-error-logs:
     file: '${tag_suffix[1]}'
     _plugin: 'oozie'
     _documentType: 'oozieErrorLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -577,7 +577,7 @@ oozie-logs:
     file: '${tag_suffix[1]}'
     _plugin: 'oozie'
     _documentType: 'oozieLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -598,7 +598,7 @@ hdfs-journalnode-manager:
     file: '${tag_suffix[1]}'
     _plugin: 'hdfs'
     _documentType: 'journalNodeLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -619,7 +619,7 @@ hdfs-zkfc-manager:
     file: '${tag_suffix[1]}'
     _plugin: 'oozie'
     _documentType: 'hdfsZkfcLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -640,7 +640,7 @@ oozie-jpa:
     file: '${tag_suffix[1]}'
     _plugin: 'oozie'
     _documentType: 'oozieJpaLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -661,7 +661,7 @@ oozie-instrumentation:
     file: '${tag_suffix[1]}'
     _plugin: 'oozie'
     _documentType: 'oozieInstrumentationLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -682,7 +682,7 @@ oozie-ops:
     file: '${tag_suffix[1]}'
     _plugin: 'oozie'
     _documentType: 'oozieOpsLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -702,7 +702,7 @@ hdfs-datanode:
     file: '${tag_suffix[1]}'
     _plugin: 'hdfs'
     _documentType: 'dataNodeLog'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
     level: ${n_level='warning'; if record['level'].strip().downcase == 'warn' then n_level else record['level'].strip().downcase end}
     message: ${record['message']}
   match:
@@ -722,6 +722,6 @@ jmeter:
     file: '${tag_suffix[1]}'
     _plugin: 'jmeter'
     _documentType: 'jmeterLogs'
-    time: ${require 'time'; time.to_time.to_i}
+    time: ${require 'time'; time.to_time.to_i * 1000}
   match:
     flush_interval: 30s
