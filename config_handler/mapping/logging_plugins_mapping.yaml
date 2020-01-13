@@ -715,7 +715,7 @@ jmeter:
     'format': csv
     'path': '/home/centos/log.jtl'
     'pos_file': '/var/log/td-agent/jmeter.pos'
-    'keys': timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+    'keys': timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,requestSuccess,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
     'types': elapsed:float,bytes:integer,sentBytes:integer,IdleTime:float,Connect:float
   transform:
     node: '#{Socket.gethostname}'
