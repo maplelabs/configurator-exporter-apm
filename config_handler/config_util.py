@@ -372,7 +372,7 @@ def write_to_elasticsearch(host, port, index, type, data):
 #         logger.error("write_in_elasticsearch error: %s" % str(e))
 
 def truncate_collectd_logfile():
-    log_path = "/tmp/collectd.log"
+    log_path = "/opt/sfapm/collectd.log"
     print "truncate the file {0}".format(log_path)
     try:
         with open(log_path, "r+") as f:

@@ -1,12 +1,12 @@
 [Unit]
 Description=Configurator
 After=syslog.target local-fs.target network.target
-ConditionPathExists=/opt/configurator-exporter/api_server.py
+ConditionPathExists=/opt/sfapm/configurator-exporter/api_server.py
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/configurator-exporter
-ExecStart=/usr/bin/python api_server.py
+WorkingDirectory=/opt/sfapm/configurator-exporter
+ExecStart=/opt/sfapm/sfapm-venv/bin/python api_server.py
 Restart=always
 RestartSec=10
 

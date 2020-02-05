@@ -241,11 +241,11 @@ def discover_log_path():
     except:
         return
     log_file = log_path+"/"+log_name+".log"
-    with open("/opt/configurator-exporter/config_handler/mapping/logging_plugins_mapping.yaml") as f:
+    with open("/opt/sfapm/configurator-exporter/config_handler/mapping/logging_plugins_mapping.yaml") as f:
         log_conf = yaml.load(f)
     log_conf["elasticsearch-general"]["source"]["path"] = log_file
 
-    with open("/opt/configurator-exporter/config_handler/mapping/logging_plugins_mapping.yaml", "w") as f:
+    with open("/opt/sfapm/configurator-exporter/config_handler/mapping/logging_plugins_mapping.yaml", "w") as f:
         yaml.dump(log_conf, f)
 
 def check_jmx_enabled(pid):

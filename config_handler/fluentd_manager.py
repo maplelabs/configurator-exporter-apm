@@ -23,7 +23,7 @@ class FluentdPluginManager:
         :return:
         """
         # Initialize defaults
-        self.plugin_path = os.path.sep + 'etc' + os.path.sep + 'td-agent'
+        self.plugin_path = "/opt/sfapm/td-agent/etc/td-agent" 
         self.service_name = 'td-agent'
 
         self.plugins = []
