@@ -1,3 +1,21 @@
+postgres-slowquery:
+  collection_type: metric
+  source:
+    '@type': tail
+    path: '/data/pgsql/data/pg_log/postgresql-Sun.log, /data/pgsql/data/pg_log/postgresql-Sat.log, /data/pgsql/data/pg_log/postgresql-Fri.log, /data/pgsql/data/pg_log/postgresql-Thu.log, /data/pgsql/data/pg_log/postgresql-Wed.log,  /data/pgsql/data/pg_log/postgresql-Tue.log, /data/pgsql/data/pg_log/postgresql-Mon.log, /var/log/postgresql/postgresql-10-main.log'
+    pos_file: '/var/log/td-agent/postgres-slowquery.pos'
+  parse:
+    '@type': regexp
+    expression: '/<\s*(?<time>[\w\s\-:.]*)\s*\>\sLOG:\s*duration:\s*(?<duration>[\w.]*)\s*(ms|s)\s*statement\s*:(?<statement>.*\b)/'
+    types: duration:float
+  transform:
+    node: '#{Socket.gethostname}'
+    file: '${tag_suffix[1]}'
+    _plugin: 'postgres'
+    _documentType: 'postgres-slowquery'
+    time: ${require 'time'; time.to_time.to_i * 1000}
+  match:
+    flush_interval: 30s
 # mysql logging mapping
 mysql-error:
   source:
